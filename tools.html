@@ -93,21 +93,22 @@
 
           <div class="calc-card">
             <h2>2 · 再填已知量</h2>
-            <p class="calc-hint">密度不知道可以先留 1.00（稀溶液近似）。改哪一行的数字，就由哪一行往另一边算。</p>
+            <p class="calc-hint">质量分数和浓度填一个，另一个自动算。常见溶质会按质量分数自动带出参考密度（也可以点下面的浓度点）；没有密度数据的溶质，密度栏会收起来，按 ρ≈1.00 估算。</p>
             <div class="calc-row">
               <label class="calc-field">
                 <span>质量分数 w（%）</span>
                 <input id="conc-w" type="number" min="0.001" max="99.9" step="0.01" inputmode="decimal" aria-label="质量分数百分比">
               </label>
               <label class="calc-field">
-                <span>物质的量浓度 c（mol/L）</span>
+                <span>浓度 c（mol/L）</span>
                 <input id="conc-c" type="number" min="0.0001" step="0.0001" inputmode="decimal" aria-label="物质的量浓度">
               </label>
-              <label class="calc-field">
-                <span>溶液密度 ρ（g/mL）</span>
+              <label class="calc-field" id="conc-rho-field">
+                <span>密度 ρ（g/mL）</span>
                 <input id="conc-rho" type="number" min="0.05" max="5" step="0.001" value="1.00" inputmode="decimal" aria-label="溶液密度">
               </label>
             </div>
+            <div class="dens-ref" id="conc-densref" aria-live="polite"></div>
             <div class="calc-out" id="conc-out" aria-live="polite"></div>
             <p class="calc-formula" id="conc-formula-note">w% = c × M ÷ (10 × ρ)　　c = 10 × ρ × w% ÷ M</p>
           </div>
