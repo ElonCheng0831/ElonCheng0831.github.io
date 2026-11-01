@@ -81,7 +81,7 @@
   }
 
   /* ---------------- 浓度换算 ---------------- */
-  var concState = { last: "w" };
+  var concState = { last: "w", showRho: false };
 
   function concEls() {
     return {
@@ -90,6 +90,8 @@
       w: $("#conc-w"),
       c: $("#conc-c"),
       rho: $("#conc-rho"),
+      rhoField: $("#conc-rho-field"),
+      ref: $("#conc-densref"),
       out: $("#conc-out"),
       m: $("#diss-m"),
       v: $("#diss-v"),
@@ -126,39 +128,127 @@
     return mm;
   }
 
+  /* 最近手填的是 c 还是 w；另一栏自动算。密度永远是输入 */
+  function derivedField() {
+    return concState.last === "w" ? "c" : "w";
+  }
+
+  function markAuto(el) {
+    var map = { w: el.w, c: el.c };
+    var auto = derivedField();
+    Object.keys(map).forEach(function (k) {
+      var field = map[k].closest ? map[k].closest(".calc-field") : null;
+      if (field) field.classList.toggle("is-auto", auto === k);
+    });
+  }
+
+  /* 参考密度：有表就渲染浓度点并让密度栏可见；没表就把密度栏收起来，避免让人填一个没有依据的数 */
+  function renderDensityRef(el) {
+    var host = el.ref;
+    if (!host) return;
+    var raw = (el.formula.value || "").trim();
+    if (!raw) {
+      host.innerHTML = "";
+      if (el.rhoField) el.rhoField.classList.remove("is-hidden");
+      return;
+    }
+    var ref = Core.densityRef ? Core.densityRef(raw) : null;
+    if (!ref) {
+      host.innerHTML = "";
+      return;
+    }
+    var cur = parseFloat(el.w.value);
+
+    if (!ref.ok) {
+      var revealed = !!concState.showRho;
+      if (el.rhoField) el.rhoField.classList.toggle("is-hidden", !revealed);
+      host.innerHTML =
+        '<div class="dens-head"><b>没有「' + esc(raw) + '」的密度对照表</b><span>' + ref.temp + " ℃</span></div>" +
+        '<p class="dens-none">这种溶质没有现成的浓度-密度数据，密度栏先收起来了，按稀溶液 ρ≈1.00 估算（' +
+        ref.range[0].toFixed(2) + "–" + ref.range[1].toFixed(2) + " g/mL）。手上有实测值的话 " +
+        '<button type="button" class="dens-reveal" data-show-rho="1">' + (revealed ? "隐藏密度栏" : "填实际密度") + "</button>" +
+        "</p>";
+      return;
+    }
+
+    if (el.rhoField) el.rhoField.classList.remove("is-hidden");
+    var chips = ref.points.map(function (p) {
+      var on = isFinite(cur) && Math.abs(cur - p[0]) < 0.005;
+      return '<button type="button" class="dens-chip' + (on ? " is-cur" : "") + '" data-w="' + p[0] + '" data-rho="' + p[1] + '">' +
+        p[0] + "% <i>" + p[1].toFixed(3) + "</i></button>";
+    }).join("");
+
+    var near = isFinite(cur) ? Core.densityAt(raw, cur) : null;
+    var top = ref.points[ref.points.length - 1][0];
+    var over = isFinite(cur) && cur > top;
+    host.innerHTML =
+      '<div class="dens-head"><b>' + esc(ref.name) + " · " + ref.temp + " ℃ 参考密度</b><span>点一个浓度点，浓度和密度一起填好；改了质量分数也会自动带出密度</span></div>" +
+      '<div class="dens-points">' + chips + "</div>" +
+      (near !== null && near !== undefined
+        ? '<p class="dens-note">' + (over
+            ? "质量分数超过表格上限（" + top + "%），先按 " + top + "% 的值 " + near.toFixed(3) + " g/mL 计。"
+            : "按相邻两点插值：质量分数 " + fmt(cur, 2) + "% 时约 " + near.toFixed(3) + " g/mL。") + "</p>"
+        : "");
+  }
+
+  /* 有对照表时，按当前质量分数把密度填进去（输入框失焦或换溶质时触发） */
+  function autoFillRho(el) {
+    var raw = (el.formula.value || "").trim();
+    if (!raw || !el.rho) return;
+    var ref = Core.densityRef ? Core.densityRef(raw) : null;
+    if (!ref || !ref.ok) return;
+    var w = parseFloat(el.w.value);
+    if (!isFinite(w)) return;
+    var near = Core.densityAt(raw, w);
+    if (near === null || near === undefined) return;
+    el.rho.value = near.toFixed(3);
+    computeConc();
+  }
+
   function computeConc() {
     var el = concEls();
     var mm = renderMolarMass(el);
-    var rho = parseFloat(el.rho.value);
+    markAuto(el);
+    renderDensityRef(el);
     if (!mm) {
       el.out.innerHTML = "";
       el.dout.textContent = "—";
       return;
     }
 
+    var hidden = !!(el.rhoField && el.rhoField.classList.contains("is-hidden"));
+    var rho = hidden ? 1.0 : parseFloat(el.rho.value);
     var w = parseFloat(el.w.value);
     var c = parseFloat(el.c.value);
+    var res;
 
-    if (concState.last === "w" && isFinite(w)) {
-      var r1 = Core.massPercentToMolar(w, rho, mm.mass);
-      if (r1.ok) {
-        el.c.value = fmt(r1.value, 4);
-        el.out.innerHTML = line("质量分数 " + fmt(w, 3) + "% → 浓度", fmt(r1.value, 4) + " mol/L");
+    if (!isFinite(rho) || rho <= 0) {
+      el.out.innerHTML = errLine("密度要填一个大于 0 的数。");
+    } else if (derivedField() === "c") {
+      if (!isFinite(w)) {
+        el.out.innerHTML = '<p class="calc-hint">填一个质量分数，浓度就自动算出来了。</p>';
       } else {
-        el.out.innerHTML = errLine(r1.error);
-      }
-    } else if (concState.last === "c" && isFinite(c)) {
-      var r2 = Core.molarToMassPercent(c, rho, mm.mass);
-      if (r2.ok) {
-        el.w.value = fmt(r2.value, 4);
-        el.out.innerHTML = line("浓度 " + fmt(c, 4) + " mol/L → 质量分数", fmt(r2.value, 3) + "%");
-      } else {
-        el.out.innerHTML = errLine(r2.error);
+        res = Core.massPercentToMolar(w, rho, mm.mass);
+        if (res.ok) {
+          el.c.value = fmt(res.value, 4);
+          el.out.innerHTML = line("质量分数 " + fmt(w, 3) + "% × 密度 " + fmt(rho, 3) + (hidden ? "（按 1.00 估算）" : "") + " → 浓度", fmt(res.value, 4) + " mol/L");
+        } else {
+          el.out.innerHTML = errLine(res.error);
+        }
       }
     } else {
-      el.out.innerHTML = '<p class="calc-hint">在上面填一个已知量（质量分数或浓度），另一边会自动算出来。</p>';
+      if (!isFinite(c)) {
+        el.out.innerHTML = '<p class="calc-hint">填一个浓度，质量分数就自动算出来了。</p>';
+      } else {
+        res = Core.molarToMassPercent(c, rho, mm.mass);
+        if (res.ok) {
+          el.w.value = fmt(res.value, 4);
+          el.out.innerHTML = line("浓度 " + fmt(c, 4) + " mol/L × 密度 " + fmt(rho, 3) + (hidden ? "（按 1.00 估算）" : "") + " → 质量分数", fmt(res.value, 3) + "%");
+        } else {
+          el.out.innerHTML = errLine(res.error);
+        }
+      }
     }
-
     /* 固体溶解 → 浓度 */
     var m = parseFloat(el.m.value);
     var v = parseFloat(el.v.value);
@@ -177,12 +267,43 @@
 
   function initConc() {
     var el = concEls();
-    el.formula.addEventListener("input", function () { computeConc(); });
-    el.rho.addEventListener("input", function () { computeConc(); });
-    el.w.addEventListener("input", function () { concState.last = "w"; computeConc(); });
-    el.c.addEventListener("input", function () { concState.last = "c"; computeConc(); });
+    el.formula.addEventListener("input", function () {
+      concState.showRho = false;
+      computeConc();
+      autoFillRho(el);
+    });
+    el.rho.addEventListener("input", function () { onEdit("rho"); });
+    el.w.addEventListener("input", function () { onEdit("w"); });
+    el.c.addEventListener("input", function () { onEdit("c"); });
+
+    /* 质量分数输完（失焦/回车）：有对照表就把密度自动带出来 */
+    el.w.addEventListener("change", function () { autoFillRho(el); });
+
+    /* 手填 w 就让 c 跟着算，手填 c 就让 w 跟着算；改密度则重算「不是刚手填的那一个」 */
+    function onEdit(field) {
+      if (field === "w" || field === "c") concState.last = field;
+      computeConc();
+    }
     el.m.addEventListener("input", function () { computeConc(); });
     el.v.addEventListener("input", function () { computeConc(); });
+
+    /* 参考密度：点一个点，同时填好质量分数与密度 */
+    if (el.ref) {
+      el.ref.addEventListener("click", function (e) {
+        var reveal = e.target && e.target.closest ? e.target.closest("[data-show-rho]") : null;
+        if (reveal) {
+          concState.showRho = !concState.showRho;
+          renderDensityRef(el);
+          return;
+        }
+        var chip = e.target && e.target.closest ? e.target.closest(".dens-chip") : null;
+        if (!chip) return;
+        el.w.value = chip.getAttribute("data-w");
+        el.rho.value = chip.getAttribute("data-rho");
+        concState.last = "w";
+        computeConc();
+      });
+    }
 
     $$("[data-fill]").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -191,10 +312,12 @@
       });
     });
 
-    /* 初始：给一个常见值 */
+    /* 初始：给一个常见值；有对照表就按 36% 把密度带出来 */
     el.w.value = "36";
     el.rho.value = "1.34";
+    concState.last = "w";
     computeConc();
+    autoFillRho(el);
   }
 
   /* ---------------- 方程式配平 ---------------- */

@@ -382,6 +382,79 @@
     return { ok: true, value: massG / (M * volumeMl / 1000) };
   }
 
+  /* ---------------------------------------------------------------
+     20 ℃ 常见水溶液的「质量分数 → 密度」参考点（g/mL）。
+     数据取自通行化学手册的整数浓度点，只用于估算；中间值可按相邻两点线性插值。
+     --------------------------------------------------------------- */
+  var DENSITY_TEMP = 20;
+  var DENSITY_REF = {
+    H2SO4: { name: "硫酸", points: [[5, 1.032], [10, 1.066], [15, 1.103], [20, 1.139], [25, 1.178], [30, 1.219], [35, 1.260], [40, 1.303], [50, 1.395], [60, 1.498], [70, 1.611], [80, 1.727], [90, 1.814], [98, 1.837]] },
+    NAOH: { name: "氢氧化钠", points: [[4, 1.043], [10, 1.109], [15, 1.164], [20, 1.219], [25, 1.274], [30, 1.328], [40, 1.430], [50, 1.525]] },
+    HCL: { name: "盐酸", points: [[5, 1.024], [10, 1.048], [15, 1.073], [20, 1.098], [25, 1.123], [30, 1.149], [32, 1.159], [37, 1.184]] },
+    HNO3: { name: "硝酸", points: [[5, 1.026], [10, 1.054], [15, 1.084], [20, 1.115], [30, 1.180], [40, 1.246], [50, 1.310], [60, 1.366], [68, 1.405]] },
+    H3PO4: { name: "磷酸", points: [[5, 1.026], [10, 1.053], [20, 1.113], [30, 1.181], [40, 1.254], [50, 1.335], [60, 1.426], [75, 1.579], [85, 1.685]] },
+    CH3COOH: { name: "乙酸", points: [[5, 1.006], [10, 1.014], [15, 1.020], [20, 1.026], [30, 1.039], [40, 1.049], [50, 1.058]] },
+    NH3: { name: "氨水", points: [[5, 0.979], [10, 0.958], [15, 0.939], [20, 0.923], [25, 0.907], [28, 0.899]] },
+    C2H5OH: { name: "乙醇", points: [[5, 0.989], [10, 0.982], [20, 0.969], [30, 0.953], [40, 0.935], [50, 0.914], [60, 0.891], [70, 0.868], [80, 0.843], [90, 0.818], [95, 0.804], [100, 0.789]] },
+    NACL: { name: "氯化钠", points: [[5, 1.034], [10, 1.067], [15, 1.109], [20, 1.148], [26, 1.197]] },
+    KOH: { name: "氢氧化钾", points: [[5, 1.044], [10, 1.092], [20, 1.188], [30, 1.288], [40, 1.399]] },
+    NA2CO3: { name: "碳酸钠", points: [[5, 1.051], [10, 1.105], [15, 1.161], [20, 1.219]] },
+    CUSO4: { name: "硫酸铜", points: [[5, 1.051], [10, 1.107], [15, 1.164], [20, 1.223]] },
+    C12H22O11: { name: "蔗糖", points: [[5, 1.019], [10, 1.038], [20, 1.081], [30, 1.127], [40, 1.176], [50, 1.229], [60, 1.286]] },
+    C6H12O6: { name: "葡萄糖", points: [[5, 1.017], [10, 1.036], [20, 1.074], [30, 1.113], [40, 1.153]] }
+  };
+
+  /* 别名 → 主键（同一物质的不同写法） */
+  var DENSITY_ALIAS = {
+    C2H6O: "C2H5OH", CH3CH2OH: "C2H5OH",
+    C2H4O2: "CH3COOH", CH3CO2H: "CH3COOH",
+    C12H22O11: "C12H22O11"
+  };
+
+  function densityKey(formula) {
+    var s = String(formula || "").replace(/\s+/g, "").replace(/[₀-₉]/g, function (ch) {
+      return String("₀₁₂₃₄₅₆₇₈₉".indexOf(ch));
+    });
+    s = s.replace(/[（）]/g, function (ch) { return ch === "（" ? "(" : ")"; });
+    /* 结晶水按无水物查表：CuSO4·5H2O → CuSO4 */
+    s = s.replace(/[·*].*$/, "");
+    s = s.toUpperCase();
+    return DENSITY_ALIAS[s] || s;
+  }
+
+  /* 返回 {ok, name, temp, points, range}；没有对照表时给区间而不是编数字 */
+  function densityRef(formula) {
+    var key = densityKey(formula);
+    var hit = DENSITY_REF[key];
+    if (hit) {
+      return { ok: true, key: key, name: hit.name, temp: DENSITY_TEMP, points: hit.points.slice() };
+    }
+    return {
+      ok: false,
+      key: key,
+      temp: DENSITY_TEMP,
+      range: [1.0, 1.2],
+      note: "常见水溶液（质量分数低于 20%）"
+    };
+  }
+
+  /* 在参考点之间线性插值，给出某个质量分数下的参考密度 */
+  function densityAt(formula, w) {
+    var ref = densityRef(formula);
+    if (!ref.ok || !(w >= 0)) return null;
+    var pts = ref.points;
+    if (w <= pts[0][0]) return pts[0][1];
+    if (w >= pts[pts.length - 1][0]) return pts[pts.length - 1][1];
+    for (var i = 1; i < pts.length; i++) {
+      if (w <= pts[i][0]) {
+        var w0 = pts[i - 1][0], w1 = pts[i][0];
+        var d0 = pts[i - 1][1], d1 = pts[i][1];
+        return d0 + ((w - w0) / (w1 - w0)) * (d1 - d0);
+      }
+    }
+    return null;
+  }
+
   var API = {
     AW: AW,
     parseFormula: parseFormula,
@@ -391,7 +464,10 @@
     subscript: subscript,
     massPercentToMolar: massPercentToMolar,
     molarToMassPercent: molarToMassPercent,
-    dissolveToMolar: dissolveToMolar
+    dissolveToMolar: dissolveToMolar,
+    densityRef: densityRef,
+    densityAt: densityAt,
+    DENSITY_REF: DENSITY_REF
   };
 
   root.ChemCore = API;

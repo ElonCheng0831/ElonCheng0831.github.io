@@ -301,3 +301,100 @@
 }
 .btn-accent:hover { background: var(--accent-deep); color: #04231f; }
 html[data-theme="dark"] .btn-accent { color: #04231f; }
+
+
+/* 自动算出来的那一栏 */
+.calc-field.is-auto > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.calc-field.is-auto > span::after {
+  content: "自动";
+  flex: none;
+  white-space: nowrap;
+  font: 700 10px/1.5 var(--sans);
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.calc-field.is-auto input {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+/* 参考密度对照点 */
+.dens-ref {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.dens-ref:empty { display: none; }
+.dens-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.dens-head b { color: var(--text-2); font-weight: 600; }
+.dens-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.dens-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  font: 11.5px/1.4 var(--mono);
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.dens-chip i { font-style: normal; color: var(--text-3); }
+.dens-chip:hover { border-color: var(--accent); color: var(--accent); }
+.dens-chip:hover i { color: var(--accent); }
+.dens-chip.is-cur {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.dens-chip.is-cur i { color: var(--accent-deep); }
+.dens-none {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-3);
+}
+.dens-none b { color: var(--text-2); font-weight: 600; }
+.dens-note {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+@media (max-width: 720px) {
+  .dens-points { gap: 5px; }
+  .dens-chip { padding: 3px 8px; font-size: 11px; }
+}
+
+.calc-field.is-hidden { display: none; }
+.dens-reveal {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
