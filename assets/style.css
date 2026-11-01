@@ -426,6 +426,20 @@ p { margin: 0; }
   grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
   gap: 18px;
 }
+.grid-more {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: 4px;
+  padding: 10px 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.grid-more:hover { border-color: var(--accent); color: var(--accent-deep); }
 
 .card {
   position: relative;

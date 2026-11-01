@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    chain.css — 药品制法「制造链路」视图（preparations.html 专用）
    参考终末地百科制造链路：浅灰点阵底、物品图块、深色工序条、底部缩放条
    ========================================================================== */
@@ -161,9 +161,11 @@
   cursor: grab;
   background-color: #f4f5f2;
   background-image:
-    radial-gradient(circle at 1px 1px, #ccd3cc 1.1px, transparent 1.2px),
-    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, .9), rgba(232, 236, 230, .2) 60%, rgba(220, 226, 219, .45));
-  background-size: 22px 22px, 100% 100%;
+    radial-gradient(circle at 1px 1px, rgba(110, 128, 118, .30) 1.1px, transparent 1.2px),
+    radial-gradient(480px 340px at 88% 36%, rgba(47, 212, 184, .34), transparent 68%),
+    radial-gradient(420px 300px at 16% 72%, rgba(232, 178, 46, .24), transparent 70%),
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, .92), rgba(238, 242, 236, .32) 60%, rgba(226, 232, 225, .55));
+  background-size: 22px 22px, 100% 100%, 100% 100%, 100% 100%;
 }
 .chain-viewport.is-panning { cursor: grabbing; }
 
@@ -245,21 +247,6 @@
   box-shadow: 0 0 0 3px rgba(232, 178, 46, .22), 0 3px 12px rgba(110, 85, 12, .18);
 }
 .chain-tile.is-product .tile-name { font-weight: 700; color: #5a4710; background: #f8f0d6; }
-.tile-alt {
-  margin-top: 1px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid #caa53c;
-  background: linear-gradient(180deg, #f6d97c, #e8b22e);
-  color: #3f3106;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.4;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(90, 66, 8, .28);
-  cursor: pointer;
-}
-.tile-alt:hover { background: linear-gradient(180deg, #ffe796, #f0be3c); }
 
 /* 工序条 */
 .chain-machine {
@@ -394,6 +381,8 @@
   cursor: pointer;
 }
 .alt-pill:hover { background: #eeda97; }
+.meta-btn { background: #fff; font: inherit; color: #35423b; cursor: pointer; }
+.meta-btn:hover { border-color: #0e9f8e; color: #0b7a6c; }
 
 .chain-roles { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
 .role-chip {
@@ -548,7 +537,116 @@
 }
 .di-risk.hz-3 { background: #fff1ed; border-color: #edc2b7; color: #ad3a24; }
 .di-risk.hz-2 { background: #fdf7e6; border-color: #e9d8a4; color: #896310; }
+.drawer-item.is-expanded {
+  border-color: rgba(14, 159, 142, .45);
+  background: linear-gradient(135deg, #fff, #f1fbf7);
+  box-shadow: 0 6px 18px rgba(8, 60, 54, .08);
+}
+.di-count {
+  flex: none;
+  padding: 2px 6px;
+  border: 1px solid rgba(14, 159, 142, .24);
+  border-radius: 999px;
+  background: rgba(14, 159, 142, .08);
+  font-size: 10px;
+  color: #0b7a6c;
+  white-space: nowrap;
+}
+.di-split {
+  display: grid;
+  gap: 7px;
+  margin: 0 0 8px;
+  padding: 9px;
+  border: 1px solid rgba(14, 159, 142, .34);
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .84), rgba(226, 248, 244, .62));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 8px 22px rgba(8, 60, 54, .07);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
+}
+.di-split-head { display: flex; align-items: center; gap: 9px; margin-bottom: 2px; }
+.di-split-head .di-body { flex: 1; }
+.di-collapse {
+  flex: none;
+  padding: 4px 8px;
+  border: 1px solid rgba(14, 159, 142, .3);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .75);
+  color: #0b7a6c;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+.di-collapse:hover { border-color: #0e9f8e; background: #fff; }
+.di-ghost {
+  position: fixed;
+  z-index: 9999;
+  margin: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border: 1px solid rgba(14, 159, 142, .3);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(8, 60, 54, .12);
+}
+.di-split.is-in { animation: di-split-in .3s cubic-bezier(.2, .9, .25, 1) both; }
+@keyframes di-split-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: none; }
+}
+.di-method {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(14, 159, 142, .26);
+  border-radius: 9px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(226, 248, 244, .72));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 4px 12px rgba(8, 60, 54, .06);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  backdrop-filter: blur(10px) saturate(150%);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s, transform .18s, box-shadow .18s;
+}
+.di-method:hover { border-color: #0e9f8e; transform: translateX(2px); }
+.di-method.is-active {
+  border-color: #0e9f8e;
+  box-shadow: 0 0 0 2px rgba(14, 159, 142, .16), 0 6px 16px rgba(8, 60, 54, .08);
+}
+.dm-no {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(14, 159, 142, .24);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .82);
+  color: #0b7a6c;
+  font: 600 9.5px/1 var(--mono);
+}
+.dm-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.dm-body b { font-size: 12px; color: #22302a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dm-body small { font-size: 10px; color: #7d8b83; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dm-go { flex: none; color: #0e9f8e; font: 600 12px/1 var(--mono); }
+@media (prefers-reduced-motion: reduce) {
+  .di-split.is-in { animation: none; }
+  .di-method { transition: none; }
+}
 .drawer-empty { padding: 22px 14px; color: #8b968f; font-size: 13px; }
+.drawer-more {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px dashed #c3cec5;
+  border-radius: 8px;
+  background: transparent;
+  color: #5d6c63;
+  font-size: 12px;
+  cursor: pointer;
+}
+.drawer-more:hover { border-color: #0e9f8e; color: #0b7a6c; background: #f3faf7; }
 .chain-scrim { position: fixed; inset: 0; background: rgba(15, 25, 20, .32); z-index: 60; }
 
 /* ---------- 响应式 ---------- */
@@ -825,3 +923,5 @@
   .salt-result { padding: 14px 13px 18px; }
   .salt-cards { grid-template-columns: 1fr; }
 }
+
+

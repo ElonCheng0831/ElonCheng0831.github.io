@@ -618,6 +618,8 @@
 
     var data = config.data;
     var state = { q: "", cat: "all", hazard: "all" };
+    var shown = 36;
+    var BATCH = 36;
 
     var chipsCat = $(config.catChips);
     var chipsHz = $(config.hazardChips);
@@ -653,7 +655,7 @@
         $$(".chip", chipsCat).forEach(function (b) {
           b.setAttribute("aria-pressed", b === btn ? "true" : "false");
         });
-        render();
+        render(true);
       });
     }
 
@@ -671,7 +673,7 @@
         $$(".chip", chipsHz).forEach(function (b) {
           b.setAttribute("aria-pressed", b === btn ? "true" : "false");
         });
-        render();
+        render(true);
       });
     }
 
@@ -691,18 +693,33 @@
       return true;
     }
 
-    function render() {
+    function render(reset) {
       var list = data.filter(matches);
+      if (reset) shown = BATCH;
       if (!list.length) {
         grid.innerHTML =
           '<div class="empty"><b>没有找到匹配的内容</b>换个关键词，或把筛选条件改成“全部”试试。</div>';
       } else {
-        grid.innerHTML = list.map(function (item) { return cardHTML(item, config.type); }).join("");
+        var visible = list.slice(0, shown);
+        grid.innerHTML = visible.map(function (item) { return cardHTML(item, config.type); }).join("");
+        if (list.length > shown) {
+          grid.innerHTML += '<button class="grid-more" type="button" data-grid-more>加载更多 · 还有 ' +
+            (list.length - shown) + " 条</button>";
+        }
       }
       if (note) {
-        note.textContent = config.noteText
+        var noteText = config.noteText
           ? config.noteText(list.length, data.length)
           : "共 " + list.length + " 条" + (list.length === data.length ? "" : " / 全部 " + data.length + " 条");
+        if (!config.noteText && list.length > shown) noteText += " · 已显示 " + shown;
+        note.textContent = noteText;
+      }
+      var more = grid.querySelector("[data-grid-more]");
+      if (more) {
+        more.addEventListener("click", function () {
+          shown += BATCH;
+          render(false);
+        });
       }
       bindCards(grid);
       observeReveals();
@@ -714,14 +731,14 @@
         clearTimeout(timer);
         timer = setTimeout(function () {
           state.q = search.value.trim().toLowerCase();
-          render();
+          render(true);
         }, 120);
       });
     }
 
     buildCatChips();
     buildHzChips();
-    render();
+    render(true);
   }
 
   /* ---------------- 首页 ---------------- */

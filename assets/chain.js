@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    chain.js — 药品制法「制造链路」视图
    参考终末地百科的物品制造链路：浅色点阵画布 + 物品图块 + 深色工序条。
    依赖：window.PREPARATIONS、window.CHEMLAB_ART、window.ChemLab
@@ -53,7 +53,8 @@
   var PILL_H = 48;
   var COL = 272;
 
-  var state = { q: "", cat: "all", hz: "all", active: null, zoom: 75, view: "chain" };
+  var state = { q: "", cat: "all", hz: "all", active: null, zoom: 75, view: "chain", drawerSplit: null, drawerLimit: 60 };
+  var DRAWER_BATCH = 60;
 
   var WORD_RULES = [
     [/溶解/, "溶解"], [/过滤|抽滤/, "过滤"], [/蒸发|浓缩/, "蒸发浓缩"],
@@ -136,14 +137,37 @@
 
   /* ---------------- 图鉴抽屉 ---------------- */
   function renderDrawer() {
-    var rows = filtered();
+    var rows = filtered(); if (state.drawerSplit && !rows.some(function (x) { return x.id === state.drawerSplit; })) state.drawerSplit = null;
     drawerCountEl.textContent = rows.length + " / " + DATA.length;
-    drawerListEl.innerHTML = rows.map(function (d) {
+    var shown = rows.slice(0, state.drawerLimit);
+    var html = shown.map(function (d) {
+      var sibs = altSiblings(d);
+      var multi = sibs.length > 1;
+      var expanded = multi && state.drawerSplit === d.id;
+      if (expanded) {
+        return '<div class="di-split is-expanded" data-for="' + esc(d.id) + '">' +
+          '<div class="di-split-head">' +
+            '<span class="di-art">' + (window.CHEMLAB_ART ? window.CHEMLAB_ART.icon(d, "p") : "") + "</span>" +
+            '<span class="di-body"><b>' + esc(d.name) + "</b><small>" + esc(d.formula || "") + " · " + sibs.length + " 种制法</small></span>" +
+            '<button class="di-collapse" type="button" data-collapse="' + esc(d.id) + '">收起</button>' +
+          "</div>" +
+          sibs.map(function (sib, idx) {
+            return '<button class="di-method' + (state.active === sib.id ? " is-active" : "") + '" type="button" data-open="' + esc(sib.id) + '">' +
+              '<span class="dm-no">' + String(idx + 1).padStart(2, "0") + "</span>" +
+              '<span class="dm-body"><b>' + esc(methodLabel(sib)) + "</b><small>" + esc(sib.formula || "") + " · 风险 " + sib.hazard + "</small></span>" +
+              '<span class="dm-go" aria-hidden="true">→</span></button>';
+          }).join("") + "</div>";
+      }
       return '<button class="drawer-item" type="button" role="option" data-id="' + esc(d.id) + '" aria-selected="' + (state.active === d.id) + '">' +
         '<span class="di-art">' + (window.CHEMLAB_ART ? window.CHEMLAB_ART.icon(d, "p") : "") + "</span>" +
         '<span class="di-body"><b>' + esc(d.name) + "</b><small>" + esc(d.formula || "") + " · " + esc(d.category) + "</small></span>" +
+        (multi ? '<span class="di-count">' + sibs.length + " 法</span>" : "") +
         '<span class="di-risk hz-' + d.hazard + '">' + riskLabel(d.hazard) + "</span></button>";
-    }).join("") || '<p class="drawer-empty">没有匹配的药品。</p>';
+    }).join("");
+    if (rows.length > shown.length) {
+      html += '<button class="drawer-more" type="button" data-more>加载更多 · 还有 ' + (rows.length - shown.length) + " 种</button>";
+    }
+    drawerListEl.innerHTML = html || '<p class="drawer-empty">没有匹配的药品。</p>';
   }
 
   function renderHz() {
@@ -161,6 +185,7 @@
     setTimeout(function () { if (drawerClose) drawerClose.focus(); }, 0);
   }
   function closeDrawer() {
+    state.drawerSplit = null;
     drawerEl.classList.remove("is-open");
     drawerEl.setAttribute("aria-hidden", "true");
     scrimEl.hidden = true;
@@ -184,7 +209,7 @@
     suggestEl.hidden = true;
     searchEl.setAttribute("aria-expanded", "false");
   }
-  function pick(id) {
+  function openRoute(id) {
     var item = byId(id);
     if (!item) return;
     hideSuggest();
@@ -193,26 +218,131 @@
     select(item);
   }
 
+  function animateDrawerSplit(from, panel) {
+    if (!panel || !window.Element || !Element.prototype.animate) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var cards = panel.querySelectorAll(".di-method");
+    for (var i = 0; i < cards.length; i++) {
+      (function (card, idx) {
+        var r = card.getBoundingClientRect();
+        var dx = from.left + from.width / 2 - (r.left + r.width / 2);
+        var dy = from.top + from.height / 2 - (r.top + r.height / 2);
+        var sx = Math.max(.72, Math.min(1.2, from.width / Math.max(1, r.width)));
+        var sy = Math.max(.5, Math.min(1.2, from.height / Math.max(1, r.height)));
+        card.animate([
+          { transform: "translate(" + dx + "px," + dy + "px) scale(" + sx + "," + sy + ")", opacity: .25, filter: "blur(3px)" },
+          { transform: "none", opacity: 1, filter: "none" }
+        ], { duration: 430, delay: idx * 60, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" });
+      })(cards[i], i);
+    }
+  }
+
+  function pick(id, sourceEl) {
+    var item = byId(id);
+    if (!item) return;
+    var sibs = altSiblings(item);
+    if (sibs.length > 1) {
+      var from = sourceEl ? sourceEl.getBoundingClientRect() : null;
+      hideSuggest();
+      if (!drawerEl.classList.contains("is-open")) openDrawer();
+      if (sourceEl && sourceEl.classList && sourceEl.classList.contains("drawer-item") && from && !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+        var ghost = sourceEl.cloneNode(true);
+        ghost.classList.add("di-ghost");
+        ghost.style.left = from.left + "px";
+        ghost.style.top = from.top + "px";
+        ghost.style.width = from.width + "px";
+        ghost.style.height = from.height + "px";
+        document.body.appendChild(ghost);
+        ghost.animate([{ opacity: .9, transform: "scale(1)" }, { opacity: 0, transform: "scale(.96)" }], { duration: 340, easing: "ease-out" });
+        setTimeout(function () { ghost.remove(); }, 380);
+      }
+      state.drawerSplit = id;
+      renderDrawer();
+      var panel = drawerListEl.querySelector('.di-split[data-for="' + id + '"]');
+      if (panel && panel.scrollIntoView) panel.scrollIntoView({ block: "nearest" });
+      if (from) animateDrawerSplit(from, panel);
+      else if (panel) panel.classList.add("is-in");
+      return;
+    }
+    openRoute(id);
+  }
+
   /* ---------------- 链路模型 ---------------- */
+  function sameRouteGroup(a, b) {
+    if (a.category === b.category) return true;
+    var life = "生活材料";
+    return (a.category === life || b.category === life) &&
+      a.category !== "试剂与溶液" && b.category !== "试剂与溶液";
+  }
+
   function altGroup(item) {
     var f = normFormula(item.formula);
     if (!f) return [];
     return DATA.filter(function (d) {
-      return d.id !== item.id && normFormula(d.formula) === f;
+      return d.id !== item.id && sameRouteGroup(item, d) && normFormula(d.formula) === f;
     });
   }
 
   function altSiblings(item) {
     var f = normFormula(item.formula);
     if (!f) return [item];
-    return DATA.filter(function (d) { return normFormula(d.formula) === f; });
+    var out = [], seen = {};
+    DATA.forEach(function (d) {
+      if (!sameRouteGroup(item, d) || normFormula(d.formula) !== f) return;
+      var key = methodLabel(d);
+      if (seen[key]) return;
+      seen[key] = 1;
+      out.push(d);
+    });
+    if (!out.some(function (d) { return d.id === item.id; })) {
+      out = out.filter(function (d) { return methodLabel(d) !== methodLabel(item); });
+      out.unshift(item);
+    }
+    return out.length ? out : [item];
+  }
+
+  var ROUTE_RE = /(法$|电解|中和|沉淀|置换|还原|氧化|分解|复分解|溶解|结晶|蒸馏|萃取|煅烧|灼烧|消化|接触|铝热|提纯|升华)/;
+
+  var BASE_ROUTES = {
+    oxygen: "高锰酸钾法",
+    "carbon-dioxide": "石灰石与盐酸法",
+    hydrogen: "锌与稀硫酸法",
+    "calcium-chloride": "石灰石与盐酸法",
+    "hydrochloric-acid": "氯化钠与浓硫酸法",
+    starch: "马铃薯提取法",
+    "iron-metal": "一氧化碳还原法",
+    "iodine-solution": "碘化钾助溶法",
+    "copper-sulfate": "胆矾结晶法"
+  };
+
+  function tagRoute(tag) {
+    if (!tag || /量法|滴定|测定|检验|鉴别|标准溶液/.test(tag) || !ROUTE_RE.test(tag)) return "";
+    return /[法路线]$/.test(tag) ? tag : tag + "法";
+  }
+
+  function methodLabel(item) {
+    if (BASE_ROUTES[item.id]) return BASE_ROUTES[item.id];
+    var base = coreName(item.name);
+    var rest = String(item.name || "").replace(base, "")
+      .replace(/^[（(]\s*/, "").replace(/\s*[）)]$/, "").trim();
+    if (rest) return /[法路线]$/.test(rest) ? rest : rest + "法";
+    if (item.tags && item.tags.length) {
+      var tag = tagRoute(item.tags[0]) || tagRoute(item.tags[1]);
+      if (tag) return tag;
+    }
+    if (item.category === "生活材料") return "生活材料法";
+    return "经典制法";
   }
 
   function layout(item) {
     var reagents = (item.reagents || []).slice(0, 9);
     var steps = (item.steps || []).slice(0, 7);
     var models = [];
-    var canvasW = Math.max(BASE_W, 320 + steps.length * COL + 190);
+    var siblings = altSiblings(item);
+    var multi = siblings.length > 1 && steps.length > 0;
+    var prodW = multi ? 210 : TILE;
+    var prodH = multi ? 64 : TILE;
+    var canvasW = Math.max(BASE_W, 320 + steps.length * COL + 190 + (prodW - TILE));
 
     var cols = reagents.length > 4 ? 2 : 1;
     var rows = cols === 2 ? Math.ceil(reagents.length / 2) : Math.max(1, reagents.length);
@@ -229,7 +359,11 @@
       models.push({ kind: "step", text: s, x: pillX + i * COL, y: CY - PILL_H / 2, i: i });
     });
 
-    models.push({ kind: "product", item: item, x: pillX + steps.length * COL, y: CY - TILE / 2 });
+    models.push({
+      kind: "product", item: item,
+      x: pillX + steps.length * COL, y: CY - prodH / 2,
+      w: prodW, h: prodH, multi: multi
+    });
     return { models: models, w: canvasW, h: 560, pillX: pillX };
   }
 
@@ -289,22 +423,13 @@
     } else if (m.kind === "product") {
       n = el("button", "chain-tile is-product");
       n.type = "button";
-      var siblingAlts = altSiblings(m.item);
       n.innerHTML = '<span class="tile-frame">' + (window.CHEMLAB_ART ? window.CHEMLAB_ART.icon(m.item, "p") : "") + "</span>" +
-        '<span class="tile-name">' + esc(coreName(m.item.name)) + "</span>" +
-        (siblingAlts.length > 1 ? '<span class="tile-alt">其他配方 ' + (siblingAlts.length - 1) + " ↔</span>" : "");
-      n.title = "查看 " + m.item.name + " 的完整制法" + (siblingAlts.length > 1 ? "（金色胶囊可切换其他配方）" : "");
+        '<span class="tile-name">' + esc(coreName(m.item.name)) + "</span>";
+      n.title = "查看 " + m.item.name + " 的完整制法";
       n.setAttribute("aria-label", m.item.name + "，产物，点击查看制法");
-      n.addEventListener("click", function () { if (window.ChemLab) window.ChemLab.openDetail("p", m.item.id); });
-      var altBadge = n.querySelector(".tile-alt");
-      if (altBadge) {
-        altBadge.addEventListener("click", function (e) {
-          e.stopPropagation();
-          var list = altSiblings(m.item);
-          var idx = list.map(function (d) { return d.id; }).indexOf(m.item.id);
-          select(list[(idx + 1) % list.length]);
-        });
-      }
+      n.addEventListener("click", function () {
+        if (window.ChemLab) window.ChemLab.openDetail("p", m.item.id);
+      });
     } else {
       n = el("div", "chain-tile is-reagent");
       n.innerHTML = '<span class="tile-frame is-plain">' + reagentGlyph(m.text) + "</span>" +
@@ -329,6 +454,7 @@
   function render(item) {
     current = item;
     var L = layout(item);
+    var prod = L.models.filter(function (m) { return m.kind === "product"; })[0];
     canvas.style.width = L.w + "px";
     canvas.style.height = L.h + "px";
 
@@ -360,13 +486,12 @@
 
     var reagents = L.models.filter(function (m) { return m.kind === "reagent"; });
     var steps = L.models.filter(function (m) { return m.kind === "step"; });
-    var prod = L.models.filter(function (m) { return m.kind === "product"; })[0];
     var edges = [];
 
     reagents.forEach(function (m) { edges.push([m.x + TILE, m.y + TILE / 2, L.pillX, CY]); });
     steps.forEach(function (m, i) {
-      var target = i < steps.length - 1 ? steps[i + 1].x : prod.x;
-      edges.push([m.x + PILL_W, m.y + PILL_H / 2, target, CY]);
+      if (i < steps.length - 1) edges.push([m.x + PILL_W, m.y + PILL_H / 2, steps[i + 1].x, CY]);
+      else edges.push([m.x + PILL_W, m.y + PILL_H / 2, prod.x, CY]);
     });
 
     edges.forEach(function (e) {
@@ -390,15 +515,13 @@
       '<span class="meta-pill">' + esc(item.formula || "—") + "</span>" +
       '<span class="meta-pill hz-' + item.hazard + '">' + riskLabel(item.hazard) + " · 风险 " + item.hazard + "</span>" +
       '<span class="meta-pill">' + (item.steps || []).length + " 道工序</span>" +
-      (alts.length ? '<button class="alt-pill" type="button" id="chain-alt">其他配方 ' + alts.length + " ↔</button>" : "");
+      '<button class="meta-pill meta-btn" type="button" id="chain-detail">完整工单 →</button>';
 
-    var altBtn = document.getElementById("chain-alt");
-    if (altBtn) {
-      altBtn.addEventListener("click", function () {
-        var list = altSiblings(item);
-        if (list.length < 2) return;
-        var idx = list.map(function (d) { return d.id; }).indexOf(item.id);
-        select(list[(idx + 1) % list.length]);
+
+    var detailBtn = document.getElementById("chain-detail");
+    if (detailBtn) {
+      detailBtn.addEventListener("click", function () {
+        if (window.ChemLab) window.ChemLab.openDetail("p", item.id);
       });
     }
 
@@ -418,7 +541,7 @@
     state.active = item.id;
     render(item);
     renderInfo(item);
-    renderDrawer();
+    if (drawerEl.classList.contains("is-open")) renderDrawer();
     try { history.replaceState(null, "", "#p/" + item.id); } catch (e) {}
   }
 
@@ -635,6 +758,7 @@
     var btn = e.target.closest(".chip");
     if (!btn) return;
     state.cat = btn.dataset.cat;
+    state.drawerLimit = DRAWER_BATCH;
     renderCats();
     renderDrawer();
     if (state.cat === "盐") {
@@ -649,11 +773,13 @@
     var btn = e.target.closest(".chip");
     if (!btn) return;
     state.hz = btn.dataset.hz;
+    state.drawerLimit = DRAWER_BATCH;
     renderHz();
     renderDrawer();
   });
   searchEl.addEventListener("input", function () {
     state.q = searchEl.value;
+    state.drawerLimit = DRAWER_BATCH;
     if (state.view === "salt") {
       hideSuggest();
       renderSaltTable();
@@ -687,12 +813,35 @@
   });
   suggestEl.addEventListener("click", function (e) {
     var b = e.target.closest("[data-id]");
-    if (b) pick(b.dataset.id);
+    if (b) pick(b.dataset.id, b);
   });
   drawerListEl.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-id]");
-    if (b) pick(b.dataset.id);
+    var collapse = e.target.closest("[data-collapse]");
+    if (collapse) { state.drawerSplit = null; renderDrawer(); return; }
+    var more = e.target.closest("[data-more]");
+    if (more) {
+      state.drawerLimit += DRAWER_BATCH;
+      renderDrawer();
+      return;
+    }
+    var open = e.target.closest("[data-open]");
+    if (open) { openRoute(open.dataset.open); return; }
+    var b = e.target.closest(".drawer-item");
+    if (!b) return;
+    var item = byId(b.dataset.id);
+    if (!item) return;
+    if (altSiblings(item).length > 1) {
+      if (state.drawerSplit === item.id) {
+        state.drawerSplit = null;
+        renderDrawer();
+        return;
+      }
+      pick(item.id, b);
+      return;
+    }
+    openRoute(item.id);
   });
+
   folderBtn.addEventListener("click", openDrawer);
   if (emptyBtn) emptyBtn.addEventListener("click", openDrawer);
   drawerClose.addEventListener("click", closeDrawer);
@@ -737,7 +886,7 @@
   /* ---------------- 启动 ---------------- */
   renderCats();
   renderHz();
-  renderDrawer();
+  if (drawerCountEl) drawerCountEl.textContent = DATA.length + " 种药品";
   try {
     var z = parseInt(localStorage.getItem(STORE_KEY), 10);
     if (z >= 40 && z <= 100) state.zoom = z;
