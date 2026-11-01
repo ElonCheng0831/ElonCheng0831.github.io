@@ -925,3 +925,7 @@
 }
 
 
+
+/* perf: offscreen */
+.drawer-item { content-visibility: auto; contain-intrinsic-size: auto 64px; }
+.method-card { content-visibility: auto; contain-intrinsic-size: auto 76px; }

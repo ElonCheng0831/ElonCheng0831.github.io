@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    chain.js — 药品制法「制造链路」视图
    参考终末地百科的物品制造链路：浅色点阵画布 + 物品图块 + 深色工序条。
    依赖：window.PREPARATIONS、window.CHEMLAB_ART、window.ChemLab
@@ -312,7 +312,21 @@
     starch: "马铃薯提取法",
     "iron-metal": "一氧化碳还原法",
     "iodine-solution": "碘化钾助溶法",
-    "copper-sulfate": "胆矾结晶法"
+    "copper-sulfate": "胆矾结晶法",
+    "hydrogen-peroxide-oxygen": "双氧水分解法",
+    "salt-recrystallization": "重结晶提纯法",
+    "baking-soda-ash": "小苏打热分解法",
+    "eggshell-calcium-carbonate": "蛋壳酸溶法",
+    "calcium-acetate": "石灰乳与醋酸法",
+    "vinegar-rust-removal": "白醋除锈法",
+    "copper-acetate": "食醋与双氧水法",
+    "potato-starch": "薯类研磨法",
+    "feoh3-colloid": "水解胶溶法",
+    "iodine-standard": "碘与碘化钾法",
+    iodine: "海带灰浸取法",
+    bakelite: "酚醛缩聚法",
+    "urea-formaldehyde-resin": "脲醛缩聚法",
+    polystyrene: "苯乙烯加聚法"
   };
 
   function tagRoute(tag) {

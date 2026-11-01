@@ -35,6 +35,24 @@
   var zoomFitEl = document.getElementById("forge-zoom-fit");
   var paletteEl = document.querySelector(".forge-palette");
   var paletteToggleEl = document.getElementById("forge-palette-toggle");
+  var pickListEl = document.getElementById("forge-pick-list");
+  var pickAutoEl = document.getElementById("forge-pick-auto");
+  var pickResetEl = document.getElementById("forge-pick-reset");
+  var summaryEl = document.getElementById("forge-summary");
+  var ionTableEl = document.getElementById("ion-table");
+  var ionRareEl = document.getElementById("ion-rare");
+  var ionRareListEl = document.getElementById("ion-rare-list");
+  var ionPickEl = document.getElementById("ion-pick");
+  var ionCountEl = document.getElementById("ion-count");
+  var ionClearEl = document.getElementById("ion-clear");
+  var stepsEl = document.getElementById("forge-steps");
+  var verdictEl = document.getElementById("forge-verdict");
+  var fvTargetEl = document.getElementById("fv-target");
+  var fvStepsEl = document.getElementById("fv-steps");
+  var fvRawsEl = document.getElementById("fv-raws");
+  var fvRiskEl = document.getElementById("fv-risk");
+  var fvMissingEl = document.getElementById("fv-missing");
+  var fvAdviceEl = document.getElementById("fv-advice");
 
   var NODE_W = 212;
   var NODE_H = 92;
@@ -56,8 +74,8 @@
   var suppressClickTimer = null;
 
   var state = {
-    q: "", cat: "all", auto: true, nodes: [], edges: [], seq: 1, example: 0,
-    supplies: {}, editing: null, root: null, overrides: {}, missing: {},
+    q: "", cat: "all", auto: true, nodes: [], edges: [], seq: 1, example: 0, paletteLimit: 60,
+    supplies: {}, editing: null, root: null, overrides: {}, missing: {}, focus: null,
     boardW: BOARD_W, boardH: BOARD_H
   };
   var drag = null;
@@ -244,6 +262,27 @@
   function depKey(node) { return node.id || "raw:" + node.raw; }
 
   /* ---------------- 左侧卡片库 ---------------- */
+  var METHOD_COUNT_CACHE = {};
+  function methodCount(item) {
+    if (!item || !item.id) return 0;
+    if (METHOD_COUNT_CACHE[item.id] == null) METHOD_COUNT_CACHE[item.id] = altMethodsFor(item).length;
+    return METHOD_COUNT_CACHE[item.id];
+  }
+
+  function splitHTML(item) {
+    var alts = altMethodsFor(item);
+    if (alts.length < 2) return "";
+    var rows = alts.map(function (m, i) {
+      return '<button class="pal-method" type="button" data-method="' + esc(m.id) + '">' +
+        '<span class="pm-no">' + String(i + 1).padStart(2, "0") + "</span>" +
+        '<span class="pm-body"><b>' + esc(m.name) + "</b><small>" + esc(m.formula || "") +
+          (i === 0 ? " · 默认" : "") + (m.difficulty ? "" : "") + "</small></span>" +
+        '<span class="pm-go">开始 →</span></button>';
+    }).join("");
+    return '<div class="pal-split"><div class="pal-split-head">先挑一条顶端做法' +
+      '<button class="pal-cancel" type="button">收起</button></div>' + rows + "</div>";
+  }
+
   function renderPalette() {
     var cats = ["all"];
     DATA.forEach(function (d) { if (cats.indexOf(d.category) === -1) cats.push(d.category); });
@@ -268,23 +307,34 @@
     });
 
     countEl.textContent = DATA.length + " 张";
-    listEl.innerHTML = rows.map(function (d) {
-      return '<button class="palette-item" type="button" draggable="true" data-id="' + esc(d.id) + '" title="拖到画布：自动展开它的全套原料">' +
-        '<span class="pi-mark">' + esc(fileCode(d)) + "</span>" +
+    var shown = rows.slice(0, state.paletteLimit || 60);
+    listEl.innerHTML = shown.map(function (d) {
+      return '<button class="palette-item' + (state.palOpen === d.id ? " is-open" : "") + '" type="button" draggable="true" data-id="' + esc(d.id) + '" title="点一下看有几种做法；拖到画布也能展开">' +
         '<span class="pi-body"><b>' + esc(d.name) + "</b><small>" + esc(d.formula || "") + " · " + esc(d.category) + "</small></span>" +
-        '<span class="pi-add" aria-hidden="true">＋</span>' +
-      "</button>";
+        (methodCount(d) > 1 ? '<span class="pi-methods">' + methodCount(d) + " 种制法</span>" : "") +
+        '<span class="pi-add" aria-hidden="true">' + (state.palOpen === d.id ? "－" : "＋") + "</span>" +
+      "</button>" + (state.palOpen === d.id ? splitHTML(d) : "");
     }).join("") || '<p class="palette-empty">没有匹配的制法卡片。</p>';
+    if (rows.length > shown.length) {
+      var rest = document.createElement("button");
+      rest.type = "button";
+      rest.className = "palette-more";
+      rest.id = "forge-more";
+      rest.textContent = "显示更多（还有 " + (rows.length - shown.length) + " 张）";
+      listEl.appendChild(rest);
+    }
   }
 
   catsEl.addEventListener("click", function (e) {
     var btn = e.target.closest(".chip");
     if (!btn) return;
     state.cat = btn.dataset.cat;
+    state.paletteLimit = 60;
     renderPalette();
   });
   searchEl.addEventListener("input", function () {
     state.q = searchEl.value;
+    state.paletteLimit = 60;
     renderPalette();
   });
 
@@ -299,8 +349,35 @@
   }
 
   listEl.addEventListener("click", function (e) {
+    if (e.target.closest(".palette-more")) return;
+
+    var mk = e.target.closest(".pal-method");
+    if (mk) {
+      var mid = mk.dataset.method;
+      state.palOpen = null;
+      renderPalette();
+      if (state.auto) {
+        buildTree(mid);
+        setStatus("已按「" + byId(mid).name + "」展开成品与整套原料");
+      } else {
+        addNode(mid, 60 + (state.nodes.length % 4) * 40, 80 + (state.nodes.length % 5) * 110);
+      }
+      return;
+    }
+    if (e.target.closest(".pal-cancel")) {
+      state.palOpen = null;
+      renderPalette();
+      return;
+    }
+
     var item = e.target.closest(".palette-item");
     if (!item) return;
+    var itemData = byId(item.dataset.id);
+    if (state.auto && itemData && altMethodsFor(itemData).length > 1) {
+      state.palOpen = state.palOpen === itemData.id ? null : itemData.id;
+      renderPalette();
+      return;
+    }
     if (state.auto) addFromPalette(item.dataset.id);
     else addNode(item.dataset.id, 60 + (state.nodes.length % 4) * 40, 80 + (state.nodes.length % 5) * 110);
   });
@@ -311,6 +388,12 @@
     e.dataTransfer.effectAllowed = "copy";
     item.classList.add("is-dragging");
   });
+  listEl.addEventListener("click", function (e) {
+    if (!e.target.closest("#forge-more")) return;
+    state.paletteLimit = (state.paletteLimit || 60) + 120;
+    renderPalette();
+  });
+
   listEl.addEventListener("dragend", function (e) {
     var item = e.target.closest(".palette-item");
     if (item) item.classList.remove("is-dragging");
@@ -344,10 +427,13 @@
     var badge = "";
     if (node.cycle) badge += '<span class="fg-badge is-warn">循环原料</span>';
     if (missing) badge += '<span class="fg-badge is-missing">缺失</span>';
-    if (node.altList && node.altList.length > 1) badge += '<span class="fg-badge is-alt">' + node.altList.length + " 种制法</span>";
+    if (node.altList && node.altList.length > 1) {
+      badge += '<button class="fg-badge is-alt fg-mk" type="button" data-mk="' + esc(node.key) +
+        '" title="看这条药有哪几种制法，点一下换">' + node.altList.length + " 种制法 ›</button>";
+    }
 
     if (item) {
-      return '<div class="fg-node-head"><span class="fg-code">' + esc(fileCode(item)) + "</span>" +
+      return '<div class="fg-node-head"><span class="fg-code">' + (node.depth === 0 ? "成品" : "中间产物") + "</span>" +
         '<span class="fg-risk hz-' + item.hazard + '">风险 ' + item.hazard + "</span>" +
         '<button class="fg-del" type="button" aria-label="移除 ' + esc(item.name) + '">×</button></div>' +
         '<div class="fg-node-main"><span class="fg-icon">' + (window.CHEMLAB_ART ? window.CHEMLAB_ART.icon(item, "p") : "") + "</span>" +
@@ -356,7 +442,7 @@
         '<span class="fg-port fg-in" data-role="in" title="原料接口"></span>' +
         '<span class="fg-port fg-out" data-role="out" title="拖此圆点到另一张卡，建立衔接"></span>';
     }
-    return '<div class="fg-node-head"><span class="fg-code">RAW</span>' +
+    return '<div class="fg-node-head"><span class="fg-code">基础原料</span>' +
       '<span class="fg-risk is-raw">基础原料</span>' +
       '<button class="fg-del" type="button" aria-label="移除 ' + esc(node.raw) + '">×</button></div>' +
       '<div class="fg-node-main"><span class="fg-icon is-raw">' +
@@ -385,6 +471,13 @@
     var del = el.querySelector(".fg-del");
     if (del) del.addEventListener("click", function (e) { e.stopPropagation(); removeNode(node.key); });
 
+    var mkBtn = el.querySelector(".fg-mk");
+    if (mkBtn) mkBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      openMethodPop(node);
+    });
+
     el.addEventListener("pointerdown", function (e) {
       if (e.target.closest(".fg-port") || e.target.closest(".fg-del")) return;
       e.preventDefault();
@@ -397,14 +490,8 @@
     el.addEventListener("click", function (e) {
       if (suppressClick) { suppressClick = false; return; }
       if (e.target.closest(".fg-del") || e.target.closest(".fg-port")) return;
-      var item = itemOf(node);
-      if (!item) {
-        if (node.altList && node.altList.length) openRecipe(node.altList[0]);
-        else setStatus("「" + node.raw + "」是基础原料，站内没有它的制法。");
-        return;
-      }
-      highlightNode(node.key);
-      openRecipe(node.id);
+      if (e.detail > 1) return;
+      toggleFocus(node.key);
     });
 
     el.addEventListener("contextmenu", function (e) { e.preventDefault(); });
@@ -441,6 +528,12 @@
     node.el.innerHTML = nodeInner(node);
     var del = node.el.querySelector(".fg-del");
     if (del) del.addEventListener("click", function (e) { e.stopPropagation(); removeNode(node.key); });
+    var mkBtn2 = node.el.querySelector(".fg-mk");
+    if (mkBtn2) mkBtn2.addEventListener("click", function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      openMethodPop(node);
+    });
     var outPort = node.el.querySelector(".fg-out");
     if (outPort) outPort.addEventListener("pointerdown", function (e) {
       if (state.auto) return;
@@ -455,6 +548,75 @@
     var row = depsListEl.querySelector('[data-key="' + key + '"]');
     if (row && row.scrollIntoView) { try { row.scrollIntoView({ block: "nearest" }); } catch (e) {} }
   }
+
+  var methodPop = null;
+
+  function closeMethodPop() {
+    if (methodPop && methodPop.parentNode) methodPop.parentNode.removeChild(methodPop);
+    methodPop = null;
+  }
+
+  function openMethodPop(node) {
+    closeMethodPop();
+    var item = itemOf(node);
+    if (!item) return;
+    var alts = altMethodsFor(item);
+    if (alts.length < 2) { setStatus("「" + item.name + "」站内只有一条制法"); return; }
+
+    var pop = document.createElement("div");
+    pop.className = "mk-pop";
+    var head = '<div class="mk-head"><b>' + esc(item.name) + "</b><small>换一条制法</small>" +
+      '<button class="mk-close" type="button" aria-label="关闭">×</button></div>';
+    var rows = alts.map(function (m, i) {
+      var cur = m.id === item.id;
+      return '<button class="mk-opt' + (cur ? " is-cur" : "") + '" type="button" data-method="' + esc(m.id) + '">' +
+        '<span class="mk-no">' + String(i + 1).padStart(2, "0") + "</span>" +
+        '<span class="mk-body"><b>' + esc(m.name) + "</b><small>" + esc(m.formula || "") + "</small></span>" +
+        '<span class="mk-tag">' + (cur ? "当前" : "换成这条") + "</span></button>";
+    }).join("");
+    pop.innerHTML = head + '<div class="mk-list">' + rows + "</div>";
+
+    document.body.appendChild(pop);
+    methodPop = pop;
+
+    var rect = node.el ? node.el.getBoundingClientRect() : { left: 120, top: 120, right: 300, bottom: 200 };
+    var pw = pop.offsetWidth || 300, ph = pop.offsetHeight || 200;
+    var left = rect.right + 12;
+    if (left + pw > window.innerWidth - 12) left = Math.max(12, rect.left - pw - 12);
+    var top = Math.min(Math.max(12, rect.top), window.innerHeight - ph - 12);
+    pop.style.left = left + "px";
+    pop.style.top = top + "px";
+
+    pop.querySelector(".mk-close").addEventListener("click", function (e) {
+      e.stopPropagation();
+      closeMethodPop();
+    });
+    pop.addEventListener("click", function (e) {
+      var opt = e.target.closest(".mk-opt");
+      if (!opt) return;
+      e.stopPropagation();
+      var id = opt.dataset.method;
+      if (id === item.id) { closeMethodPop(); return; }
+      closeMethodPop();
+      if (node.depth === 0) {
+        buildTree(id);
+        setStatus("成品作法已切换为：" + byId(id).name);
+      } else {
+        setOverride(node, id);
+        rebuild();
+        setStatus("「" + item.name + "」已换成：" + byId(id).name);
+      }
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    if (!methodPop) return;
+    if (e.target.closest(".mk-pop") || e.target.closest(".fg-mk")) return;
+    closeMethodPop();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeMethodPop();
+  });
 
   function openRecipe(id) {
     if (window.ChemLab && window.ChemLab.openDetail) window.ChemLab.openDetail("p", id);
@@ -515,7 +677,7 @@
     layoutTree();
     state.nodes.forEach(function (n) { if (n.cycle) refreshNode(n); });
     renderAll();
-    scrollToRoot();
+    autoFrame();
     scheduleSave();
     updateEmpty();
   }
@@ -530,6 +692,21 @@
       scroller.scrollLeft = Math.max(0, root.x * zoom + (NODE_W * zoom) / 2 - scroller.clientWidth / 2);
       scroller.scrollTop = Math.max(0, root.y * zoom + (NODE_H * zoom) / 2 - scroller.clientHeight / 2);
     } catch (e) {}
+  }
+
+  function autoFrame() {
+    var scroller = board.parentNode;
+    var minX = Infinity, maxX = 0;
+    state.nodes.forEach(function (n) {
+      if (n.x < minX) minX = n.x;
+      if (n.x + NODE_W > maxX) maxX = n.x + NODE_W;
+    });
+    if (!scroller || !isFinite(minX) || maxX <= minX) { scrollToRoot(); return; }
+    var span = maxX - minX + 48;
+    var avail = scroller.clientWidth - 24;
+    var want = avail > 0 ? Math.min(1, avail / span) : 1;
+    if (want < 0.9) setZoom(Math.max(0.55, want));
+    setTimeout(scrollToRoot, 60);
   }
 
   function candidatesFor(text, item) {
@@ -979,6 +1156,42 @@
     afterChange();
   }
 
+  function ancestorSet(key) {
+    var set = {}, stack = [key];
+    while (stack.length) {
+      var k = stack.pop();
+      if (set[k]) continue;
+      set[k] = true;
+      for (var i = 0; i < state.edges.length; i++) {
+        var ed = state.edges[i];
+        if (ed.to === k && !set[ed.from]) stack.push(ed.from);
+      }
+    }
+    return set;
+  }
+
+  function applyFocus() {
+    var keep = state.focus ? ancestorSet(state.focus) : null;
+    state.nodes.forEach(function (n) {
+      if (!n.el) return;
+      n.el.classList.toggle("is-dim", !!keep && !keep[n.key]);
+      n.el.classList.toggle("is-focus", !!keep && state.focus === n.key);
+    });
+    Array.prototype.forEach.call(svg.querySelectorAll(".fg-edge"), function (p) {
+      var from = p.getAttribute("data-from"), to = p.getAttribute("data-to");
+      p.classList.toggle("is-dim", !!keep && !(keep[from] && keep[to]));
+    });
+  }
+
+  function toggleFocus(key) {
+    state.focus = state.focus === key ? null : key;
+    applyFocus();
+    if (state.focus) {
+      var n = nodeByKey(state.focus);
+      setStatus(n ? "只看「" + (itemOf(n) ? itemOf(n).name : n.raw) + "」的上游：再点一次这张卡取消" : "已聚焦这条上游");
+    }
+  }
+
   function renderEdges() {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
 
@@ -1010,6 +1223,8 @@
       path.appendChild(title);
       svg.appendChild(path);
     });
+
+    applyFocus();
 
     if (linking) {
       tempPath = document.createElementNS(SVG_NS, "path");
@@ -1064,11 +1279,14 @@
     var entries = r.order.map(function (k) { return nodeByKey(k); }).filter(Boolean);
 
     if (!state.nodes.length) {
-      routeListEl.innerHTML = '<li class="route-idle">还没有节点，先拖一个药品进来。</li>';
+      routeListEl.innerHTML = '<li class="route-idle">还没有节点。先从左边点一张制法卡片，成品会出现在画布右端。</li>';
       riskEl.textContent = "风险 —";
       riskEl.className = "route-risk";
+      if (summaryEl) summaryEl.textContent = "";
       routeNoteEl.textContent = "";
-      setStatus("节点 0 · 连线 0 · 尚未成链");
+      if (verdictEl) verdictEl.hidden = true;
+      updateSteps();
+      setStatus("还没有卡片");
       return;
     }
 
@@ -1135,21 +1353,61 @@
     var links = Math.max(0, entries.length - 1);
     riskEl.textContent = "风险 " + risk + " 级";
     riskEl.className = "route-risk" + (risk >= 3 ? " is-high" : risk === 2 ? " is-mid" : "");
+    var rootItem = state.root ? byId(state.root) : null;
+    if (summaryEl) {
+      summaryEl.textContent = (rootItem ? rootItem.name + " · " : "") + entries.length + " 步 · 自备 " + raws + " 种原料" +
+        (missing ? " · 缺失 " + missing : "");
+    }
     if (state.auto) {
-      routeNoteEl.textContent = "自动配方树：" + state.nodes.length + " 个节点、" + links + " 处衔接，其中 " + raws +
-        " 种基础原料需要自备；最高风险 " + risk + " 级。同一种药品只展开一次，循环依赖以复用连线表示。基础原料可点「补足药品」记录实际补入的试剂，随路线保存和导出。" +
+      routeNoteEl.textContent = "自动配方树（知识关联，未经实验验证）：" + state.nodes.length + " 个节点、" + links + " 处衔接，其中 " + raws +
+        " 种基础原料需要自备；最高风险 " + risk + " 级。同一药品只展开一次，循环依赖以复用连线表示。这张图是按配方里的试剂反推出来的关联，不是有人按此操作过的方案；基础原料可点「补足药品」记录实际补入的试剂，随路线保存和导出。" +
         (buildCtx && buildCtx.truncated ? "已达节点上限，部分深层依赖未继续展开。" : "");
     } else {
-      routeNoteEl.textContent = "共 " + entries.length + " 步、" + links + " 处衔接。风险取各步最高值；「需补试剂」表示上一步产物未出现在下一步原料表里，可点「补足药品」手动补入。";
+      routeNoteEl.textContent = "手动编排（你自己连的步骤，仍未经验证）：共 " + entries.length + " 步、" + links + " 处衔接。风险取各步最高值；「需补试剂」表示上一步产物未出现在下一步原料表里，可点「补足药品」手动补入。";
     }
-    setStatus("节点 " + state.nodes.length + " · 连线 " + state.edges.length + " · " +
-      (state.auto ? "自动配方树" : entries.length + " 步路线") + (missing ? " · 缺失 " + missing : ""));
+    updateVerdict(risk, raws, missing, entries.length, rootItem);
+    updateSteps();
+    setStatus(state.nodes.length + " 张卡 · " + state.edges.length + " 条连线 · " +
+      (state.auto ? "自动配方树" : entries.length + " 步路线") + (missing ? " · 缺 " + missing + " 样" : ""));
   }
 
   /* ---------------- 依赖清单 ---------------- */
+  function updateVerdict(risk, raws, missing, steps, rootItem) {
+    if (!verdictEl) return;
+    if (!state.nodes.length) { verdictEl.hidden = true; return; }
+    verdictEl.hidden = false;
+    if (fvTargetEl) fvTargetEl.textContent = rootItem ? rootItem.name + (rootItem.formula ? "（" + rootItem.formula + "）" : "") : "已排好的路线";
+    if (fvStepsEl) fvStepsEl.textContent = steps + " 步";
+    if (fvRawsEl) fvRawsEl.textContent = raws + " 种";
+    if (fvRiskEl) { fvRiskEl.textContent = risk + " 级"; fvRiskEl.className = "fv-hz is-" + risk; }
+    if (fvMissingEl) { fvMissingEl.textContent = missing ? missing + " 样" : "不缺"; fvMissingEl.className = missing ? "is-warn" : ""; }
+    if (fvAdviceEl) {
+      var msg;
+      if (missing) msg = "有 " + missing + " 样东西现在拿不到。可以在「选一条路线」里换一条制法，或者在清单里给那一样点「补足药品」，写下你实际能拿到的替代品。";
+      else if (risk >= 3) msg = "这条路线里有高危步骤，必须在正规实验室、由老师带着做；动手前先读一遍「安全须知」。";
+      else if (raws) msg = "站内能做的部分已经排好了，剩下 " + raws + " 样基础原料要你自己备；照着「按顺序怎么做」从上往下一步步来。";
+      else msg = "这条路线用到的药站内都有制法，照着「按顺序怎么做」从上往下做即可。";
+      fvAdviceEl.textContent = msg;
+    }
+  }
+
+  function updateSteps() {
+    if (!stepsEl) return;
+    var has = state.nodes.length > 0;
+    var multi = state.nodes.some(function (n) { return n.altList && n.altList.length > 1; });
+    var missing = Object.keys(state.missing).length > 0;
+    var next = !has ? 1 : (multi && !Object.keys(state.overrides).length ? 3 : 4);
+    Array.prototype.forEach.call(stepsEl.children, function (li) {
+      var n = parseInt(li.getAttribute("data-step"), 10);
+      li.classList.toggle("is-active", n === next);
+      li.classList.toggle("is-done", has && n < next);
+      if (n === 4) li.classList.toggle("is-warn", missing && has);
+    });
+  }
+
   function renderDeps() {
     if (!state.nodes.length) {
-      depsListEl.innerHTML = '<p class="deps-idle">还没有依赖。拖一个药品进来，这里会列出每一层原料、缺少的药品和可替换的制法。</p>';
+      depsListEl.innerHTML = '<p class="deps-idle">还没有原料清单。拖一个药品进来，这里会按层级列出每一步要用的药和它们的制法。</p>';
       depsCountEl.textContent = "0 项";
       return;
     }
@@ -1163,7 +1421,7 @@
       if (!item) raws += 1;
       if (miss) missing += 1;
       var name = item ? item.name : node.raw;
-      var sub = item ? (item.formula || "") : "需要自备";
+      var sub = item ? (item.formula || "") + " · " + item.category : "站内没有制法，需要自备";
       var acts = "";
       if (item) {
         acts += '<button class="dep-btn" type="button" data-dep-recipe="' + node.key + '">制法</button>';
@@ -1171,12 +1429,73 @@
       }
       acts += '<button class="dep-btn' + (miss ? " is-on" : "") + '" type="button" data-dep-missing="' + node.key + '">' + (miss ? "恢复" : "缺失") + "</button>";
       return '<div class="dep-row' + (miss ? " is-missing" : "") + '" data-key="' + node.key + '">' +
-        '<span class="dep-kind' + (item ? "" : " is-raw") + '">' + (item ? esc(item.category) : "原料") + "</span>" +
+        '<span class="dep-kind' + (item ? "" : " is-raw") + '">' + (node.depth === 0 ? "成品" : "第 " + (node.depth + 1) + " 层") + "</span>" +
         '<span class="dep-main"><b>' + esc(name) + '</b><small>' + esc(sub) + "</small></span>" +
         (node.altList && node.altList.length > 1 ? '<span class="dep-alt">' + node.altList.length + " 法</span>" : "") +
         '<span class="dep-actions">' + acts + "</span></div>";
     }).join("");
     depsCountEl.textContent = state.nodes.length + " 项 · 基础原料 " + raws + " · 缺失 " + missing;
+  }
+
+  /* ---------------- 选一条路线 ---------------- */
+  function pickRowHTML(node) {
+    var item = itemOf(node);
+    var missing = !!state.missing[depKey(node)];
+    if (!item) {
+      return '<div class="pick-row is-raw' + (missing ? " is-missing" : "") + '" data-key="' + node.key + '">' +
+        '<span class="pick-name"><b>' + esc(node.raw) + "</b><small>基础原料 · 站内没有制法，自备</small></span>" +
+        '<span class="pick-tag">自备</span></div>';
+    }
+    var alts = node.altList && node.altList.length ? node.altList : [node.id];
+    var opts = alts.map(function (id) {
+      var d = byId(id);
+      return '<option value="' + esc(id) + '"' + (id === node.id ? " selected" : "") + ">" + esc(d ? d.name : id) + "</option>";
+    }).join("");
+    var where = node.depth === 0 ? "成品 · 这一步决定整棵树" : "第 " + (node.depth + 1) + " 层 · 上游制法";
+    var control = alts.length > 1
+      ? '<select class="pick-select" data-pick="' + node.key + '" aria-label="' + esc(item.name) + ' 用哪一种制法">' + opts + "</select>"
+      : '<span class="pick-tag">唯一制法</span>';
+    return '<div class="pick-row' + (missing ? " is-missing" : "") + '" data-key="' + node.key + '">' +
+      '<span class="pick-name"><b>' + esc(item.name) + "</b><small>" + esc(item.formula || "") + " · " + esc(where) + "</small></span>" +
+      control + "</div>";
+  }
+
+  function renderPicker() {
+    if (!pickListEl) return;
+    if (!state.nodes.length) {
+      pickListEl.innerHTML = '<p class="pick-idle">先拖一张制法卡片进来。有多条制法的节点会出现在这里，改成你想要的那一条即可。</p>';
+      return;
+    }
+    var rows = state.nodes.slice().sort(function (a, b) {
+      if (a.depth !== b.depth) return a.depth - b.depth;
+      return a.key < b.key ? -1 : 1;
+    });
+    pickListEl.innerHTML = rows.map(pickRowHTML).join("");
+  }
+
+  function pickCheapest() {
+    if (!state.nodes.length) { setStatus("先拖一张制法卡片进来"); return; }
+    var changed = 0;
+    state.nodes.forEach(function (node) {
+      if (!node.altList || node.altList.length < 2) return;
+      var best = node.id;
+      var bestCost = routeCost(node.id, {});
+      node.altList.forEach(function (id) {
+        if (id === node.id) return;
+        var c = routeCost(id, {});
+        if (c < bestCost) { bestCost = c; best = id; }
+      });
+      if (best !== node.id) { setOverride(node, best); changed += 1; }
+    });
+    rebuild();
+    setStatus(changed ? "已按「落到基础原料的层数最少」重排 " + changed + " 处制法" : "现在每条制法都已经是最短的那一组");
+  }
+
+  function resetPicks() {
+    state.overrides = {};
+    if (!state.root) { renderAll(); return; }
+    rebuild();
+    setStatus("已恢复工坊默认的制法选择");
   }
 
   depsListEl.addEventListener("click", function (e) {
@@ -1272,6 +1591,12 @@
     setStatus("「" + displayName(node) + "」已切换到替代制法：" + next.name);
   }
 
+  function scrollToProduct() {
+    var scroller = board.parentNode;
+    if (!scroller) return;
+    try { scroller.scrollLeft = scroller.scrollWidth; } catch (e) {}
+  }
+
   function rebuild() {
     if (!state.root) { renderAll(); scheduleSave(); return; }
     var root = state.root;
@@ -1299,12 +1624,214 @@
     renderEdges();
     renderRoute();
     renderDeps();
+    renderPicker();
     scheduleSave();
   }
+  /* ---------------- 盐类阴阳离子检索（交叉表） ---------------- */
+  var ION_SALTS = DATA.filter(function (d) {
+    return d && d.ions && d.ions.length === 2 && d.ions[0] && d.ions[1];
+  });
+  // 行列顺序参考制法页的盐表，常用离子在前
+  var CATION_ORDER = ["H⁺", "Li⁺", "Na⁺", "K⁺", "NH₄⁺", "Mg²⁺", "Ca²⁺", "Sr²⁺", "Ba²⁺", "Al³⁺", "Cr³⁺", "Mn²⁺", "Fe²⁺", "Fe³⁺", "Co²⁺", "Ni²⁺", "Cu⁺", "Cu²⁺", "Zn²⁺", "Ag⁺", "Pb²⁺", "Sn²⁺"];
+  var ANION_ORDER = ["OH⁻", "Cl⁻", "Br⁻", "I⁻", "NO₃⁻", "NO₂⁻", "SO₄²⁻", "HSO₄⁻", "HSO₃⁻", "CO₃²⁻", "HCO₃⁻", "PO₄³⁻", "HPO₄²⁻", "H₂PO₄⁻", "SiO₃²⁻", "S₂O₃²⁻", "SO₃²⁻", "MnO₄⁻", "ClO₃⁻", "ClO₄⁻", "BrO₃⁻", "IO₃⁻", "CrO₄²⁻", "Cr₂O₇²⁻", "S²⁻", "C₂O₄²⁻", "CH₃COO⁻", "F⁻", "SCN⁻"];
+  var RARE_MIN = 2;
+  var ionState = { c: "", a: "", pickKey: "" };
+
+  function sortIons(list, order) {
+    return list.slice().sort(function (x, y) {
+      var ix = order.indexOf(x), iy = order.indexOf(y);
+      if (ix < 0) ix = 999;
+      if (iy < 0) iy = 999;
+      if (ix !== iy) return ix - iy;
+      return x.localeCompare(y, "zh");
+    });
+  }
+
+  function ionCounts(list, index) {
+    var counts = {};
+    list.forEach(function (d) { counts[d.ions[index]] = (counts[d.ions[index]] || 0) + 1; });
+    return counts;
+  }
+
+  function mainAxis(counts, order) {
+    var out = order.filter(function (x) { return (counts[x] || 0) >= RARE_MIN; });
+    Object.keys(counts).sort().forEach(function (x) {
+      if (counts[x] >= RARE_MIN && out.indexOf(x) === -1) out.push(x);
+    });
+    return out;
+  }
+
+  function splitSalts(list) {
+    var rows = mainAxis(ionCounts(list, 0), CATION_ORDER);
+    var cols = mainAxis(ionCounts(list, 1), ANION_ORDER);
+    var main = [], rare = [];
+    list.forEach(function (d) {
+      if (rows.indexOf(d.ions[0]) !== -1 && cols.indexOf(d.ions[1]) !== -1) main.push(d);
+      else rare.push(d);
+    });
+    return { rows: rows, cols: cols, main: main, rare: rare };
+  }
+
+  function methodWord(item) {
+    var n = altMethodsFor(item).length;
+    return n > 1 ? n + " 法" : (item.formula || "—");
+  }
+
+  function renderIonRare(list) {
+    if (!ionRareEl || !ionRareListEl) return;
+    ionRareEl.hidden = !list.length;
+    ionRareListEl.innerHTML = list.map(function (d) {
+      var n = altMethodsFor(d).length;
+      return '<button type="button" class="salt-chip" data-salt="' + esc(d.id) + '">' +
+        "<b>" + esc(d.formula || "—") + "</b><span>" + esc(d.name) + "</span>" +
+        (n > 1 ? '<em>' + n + " 法</em>" : "") + "</button>";
+    }).join("");
+  }
+
+  function clearIonMark() {
+    if (!ionTableEl) return;
+    var cells = ionTableEl.querySelectorAll(".salt-cell.is-active");
+    for (var i = 0; i < cells.length; i++) cells[i].classList.remove("is-active");
+    if (ionRareListEl) {
+      var chips = ionRareListEl.querySelectorAll(".salt-chip.is-active");
+      for (var j = 0; j < chips.length; j++) chips[j].classList.remove("is-active");
+    }
+  }
+
+  function ionChoiceHTML(list, cation, anion) {
+    var head = '<div class="ion-pick-head"><b>「' + esc(cation) + " × " + esc(anion) +
+      "」有 " + list.length + " 条制法</b><span>选一条当成品，右下角的配方树就按它展开</span></div>";
+    var rows = list.map(function (d, i) {
+      var n = (d.steps || []).length;
+      return '<button type="button" class="salt-choice" data-build="' + esc(d.id) + '">' +
+        '<span class="pick-no">' + String(i + 1).padStart(2, "0") + "</span>" +
+        '<span class="pick-body">' +
+          "<b>" + esc(d.name) + "</b>" +
+          "<small>" + esc(d.formula || "—") + " · 风险 " + esc(d.hazard || "-") + " · " + n + " 道工序</small>" +
+        "</span>" +
+        '<span class="pick-go">用作成品 →</span>' +
+      "</button>";
+    }).join("");
+    return head + '<div class="salt-choice-list">' + rows + "</div>";
+  }
+
+  function renderIonPick(list, cation, anion) {
+    if (!ionPickEl) return;
+    if (!list || !list.length) { ionPickEl.hidden = true; ionPickEl.innerHTML = ""; return; }
+    ionPickEl.hidden = false;
+    ionPickEl.innerHTML = ionChoiceHTML(list, cation, anion);
+  }
+
+  function renderIonTable() {
+    if (!ionTableEl) return;
+    var split = splitSalts(ION_SALTS);
+    var cells = {};
+    split.main.forEach(function (d) {
+      var key = d.ions[0] + "|" + d.ions[1];
+      (cells[key] = cells[key] || []).push(d);
+    });
+    renderIonRare(split.rare);
+    if (ionCountEl) {
+      ionCountEl.textContent = "共收录 " + ION_SALTS.length + " 种带离子数据的盐 · 主表 " +
+        split.main.length + " 种 · 少量离子 " + split.rare.length + " 种";
+    }
+    var html = '<thead><tr><th class="salt-corner" scope="col">阳离子 \\ 阴离子</th>';
+    split.cols.forEach(function (a) { html += '<th scope="col">' + esc(a) + "</th>"; });
+    html += "</tr></thead><tbody>";
+    split.rows.forEach(function (c) {
+      html += '<tr><th scope="row">' + esc(c) + "</th>";
+      split.cols.forEach(function (a) {
+        var list = cells[c + "|" + a];
+        if (!list) { html += '<td class="salt-none">·</td>'; return; }
+        var label = list.length > 1 ? list.length + " 法" : (list[0].formula || "—");
+        var name = list.map(function (d) { return d.name; }).join(" / ");
+        html += '<td><button type="button" class="salt-cell" data-c="' + esc(c) + '" data-a="' + esc(a) +
+          '" title="' + esc(name) + '"><b>' + esc(label) + "</b><small>" + esc(name) + "</small></button></td>";
+      });
+      html += "</tr>";
+    });
+    ionTableEl.innerHTML = html + "</tbody>";
+  }
+
+  function renderIons() {
+    renderIonTable();
+    if (ionPickEl) { ionPickEl.hidden = true; ionPickEl.innerHTML = ""; }
+    clearIonMark();
+    ionState.pickKey = "";
+  }
+
+  function buildFromIon(id) {
+    var item = ID_INDEX[id];
+    if (!item) return;
+    if (autoEl && !autoEl.checked) {
+      autoEl.checked = true;
+      state.auto = true;
+      document.body.classList.add("mode-auto");
+      document.body.classList.remove("mode-manual");
+    }
+    buildTree(id);
+    setStatus("已按「" + item.name + "」展开配方树（盐类检索）");
+    if (board && board.scrollIntoView) board.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
+  function pickFromCell(cation, anion, btn) {
+    var list = ION_SALTS.filter(function (d) { return d.ions[0] === cation && d.ions[1] === anion; });
+    if (!list.length) return;
+    clearIonMark();
+    if (btn) btn.classList.add("is-active");
+    var key = cation + "|" + anion;
+    if (list.length === 1 && altMethodsFor(list[0]).length === 1) { buildFromIon(list[0].id); return; }
+    if (ionState.pickKey === key) { renderIonPick(null); ionState.pickKey = ""; return; }
+    ionState.pickKey = key;
+    renderIonPick(list, cation, anion);
+    if (ionPickEl && ionPickEl.scrollIntoView) ionPickEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  if (ionTableEl) {
+    ionTableEl.addEventListener("click", function (e) {
+      var cell = e.target.closest(".salt-cell");
+      if (!cell) return;
+      pickFromCell(cell.getAttribute("data-c"), cell.getAttribute("data-a"), cell);
+    });
+  }
+  if (ionRareListEl) {
+    ionRareListEl.addEventListener("click", function (e) {
+      var chip = e.target.closest(".salt-chip");
+      if (!chip) return;
+      var id = chip.getAttribute("data-salt");
+      var item = ID_INDEX[id];
+      if (!item) return;
+      clearIonMark();
+      chip.classList.add("is-active");
+      if (altMethodsFor(item).length > 1) {
+        ionState.pickKey = "rare:" + id;
+        renderIonPick([item], item.ions[0], item.ions[1]);
+        return;
+      }
+      buildFromIon(id);
+    });
+  }
+  if (ionPickEl) {
+    ionPickEl.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-build]");
+      if (!btn) return;
+      buildFromIon(btn.getAttribute("data-build"));
+    });
+  }
+  if (ionClearEl) {
+    ionClearEl.addEventListener("click", function () {
+      ionState.c = "";
+      ionState.a = "";
+      ionState.pickKey = "";
+      renderIons();
+    });
+  }
+
   function renderAll() {
     renderEdges();
     renderRoute();
     renderDeps();
+    renderPicker();
   }
   function setStatus(text) { statusEl.textContent = text; }
 
@@ -1522,8 +2049,28 @@
   }
 
   document.getElementById("forge-example").addEventListener("click", loadExample);
+  var emptyExampleEl = document.getElementById("forge-empty-example");
+  if (emptyExampleEl) emptyExampleEl.addEventListener("click", loadExample);
   document.getElementById("forge-clear").addEventListener("click", clearAll);
   document.getElementById("forge-export").addEventListener("click", exportRoute);
+  if (pickAutoEl) pickAutoEl.addEventListener("click", pickCheapest);
+  if (pickResetEl) pickResetEl.addEventListener("click", resetPicks);
+  if (pickListEl) pickListEl.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-pick]");
+    if (!sel) return;
+    var node = nodeByKey(sel.getAttribute("data-pick"));
+    if (!node || !node.id) return;
+    var id = sel.value;
+    var label = byId(id) ? byId(id).name : id;
+    if (node.depth === 0) {
+      buildTree(id);
+      setStatus("成品改成用这一条制法做：" + label);
+      return;
+    }
+    setOverride(node, id);
+    rebuild();
+    setStatus("「" + (itemOf(node) ? itemOf(node).name : node.raw) + "」改用：" + label);
+  });
   reflowEl.addEventListener("click", function () {
     if (!state.auto) { setStatus("手动模式下可以自由拖动卡片"); return; }
     if (state.root) { layoutTree(); renderEdges(); save(); setStatus("图层已重排"); }
@@ -1533,8 +2080,8 @@
     state.auto = !!autoEl.checked;
     document.body.classList.toggle("mode-auto", state.auto);
     if (modeHintEl) modeHintEl.textContent = isSmall
-      ? "双指缩放 · 单指平移 · 点卡片看制法"
-      : (state.auto ? "自动展开 · 空白处拖动平移 · 拖动卡片移动 · × 删除" : "手动编排 · 空白处拖动平移 · 拖动卡片 · 从右侧圆点拉线");
+      ? "双指缩放 · 单指平移 · 点卡片只看它的上游"
+      : (state.auto ? "点卡片只看这条上游 · 双击看制法 · 拖动平移画布" : "手动编排 · 拖动卡片 · 从右侧圆点拉线");
     if (state.auto && state.root) rebuild();
     else { renderAll(); scheduleSave(); }
     setStatus(state.auto ? "已开启自动展开" : "已切换到手动编排");
@@ -1552,7 +2099,7 @@
   var savedRaw = null;
   try { savedRaw = localStorage.getItem(ZOOM_KEY); } catch (e) {}
   var isSmall = window.matchMedia("(max-width: 640px)").matches;
-  if (isSmall && modeHintEl) modeHintEl.textContent = "双指缩放 · 单指平移 · 点卡片看制法";
+  if (isSmall && modeHintEl) modeHintEl.textContent = "双指缩放 · 单指平移 · 点卡片只看它的上游";
   var savedZoom = savedRaw ? parseFloat(savedRaw) : (isSmall ? 0.7 : 1);
   zoom = clamp(isNaN(savedZoom) ? 1 : savedZoom, ZOOM_MIN, ZOOM_MAX);
   board.style.zoom = zoom;
@@ -1575,8 +2122,10 @@
   if (autoEl) autoEl.checked = state.auto;
   document.body.classList.toggle("mode-auto", state.auto);
   if (modeHintEl) modeHintEl.textContent = isSmall
-    ? "双指缩放 · 单指平移 · 点卡片看制法"
-    : (state.auto ? "自动展开 · 空白处拖动平移 · 拖动卡片移动 · × 删除" : "手动编排 · 空白处拖动平移 · 拖动卡片 · 从右侧圆点拉线");
+    ? "双指缩放 · 单指平移 · 点卡片只看它的上游"
+    : (state.auto ? "点卡片只看这条上游 · 双击看制法 · 拖动平移画布" : "手动编排 · 拖动卡片 · 从右侧圆点拉线");
+
+  renderIons();
 
   window.ChemForge = {
     state: state,
@@ -1597,6 +2146,10 @@
       scheduleSave();
     },
     routeText: routeText,
-    expandReagents: findProducers
+    renderPicker: renderPicker,
+    pickCheapest: pickCheapest,
+    resetPicks: resetPicks,
+    expandReagents: findProducers,
+    renderIons: renderIons
   };
 })();

@@ -132,8 +132,9 @@
 
   mergeAddons();
 
-  var PREP = window.PREPARATIONS || [];
-  var EXP = window.EXPERIMENTS || [];
+  var HOME = window.CHEMLAB_HOME || null;
+  var PREP = window.PREPARATIONS || (HOME ? HOME.prep : []);
+  var EXP = window.EXPERIMENTS || (HOME ? HOME.exp : []);
   var factoryMode = document.body.classList.contains("factory");
   var chainMode = document.body.classList.contains("chain-page");
 
@@ -149,7 +150,7 @@
     if (type !== "e") return "";
     var level = item.difficulty;
     if (!DIFFICULTY[level]) return "";
-    return '<span class="diff diff-' + level + '">难度 ' + level + " · " + DIFFICULTY[level] + "</span>";
+    return '<span class="diff diff-' + level + '" title="学习难度：原理与步骤的复杂程度，与风险等级无关">学习难度 ' + level + " · " + DIFFICULTY[level] + "</span>";
   }
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
@@ -543,6 +544,10 @@
       );
     }
 
+    if (window.CHEMLAB_SOURCE && window.CHEMLAB_SOURCE.blockHTML) {
+      out.push(window.CHEMLAB_SOURCE.blockHTML(item, type));
+    }
+
     return out.join("");
   }
 
@@ -572,7 +577,7 @@
       (item.formula ? '<div class="sub">' + esc(item.formula) + "</div>" : "") +
       '<div class="meta">' +
         '<span class="cat">' + esc(item.category) + "</span>" +
-        '<span class="hz ' + hz.cls + '">' + hz.label + "</span>" +
+        '<span class="hz ' + hz.cls + '" title="操作风险 ' + item.hazard + ' / 3：做这件事有多危险，与学习难度无关">' + hz.label + "</span>" +
         (item.duration ? '<span class="cat">' + esc(item.duration) + "</span>" : "") +
         diffPill(item, type) +
       "</div>";
@@ -760,6 +765,17 @@
     track.innerHTML = html + html; /* 复制一份实现无缝滚动 */
   }
 
+  function pickRandom(list, n) {
+    var pool = list.slice();
+    var out = [];
+    var k = Math.min(n, pool.length);
+    for (var i = 0; i < k; i++) {
+      var at = Math.floor(Math.random() * pool.length);
+      out.push(pool.splice(at, 1)[0]);
+    }
+    return out;
+  }
+
   function initFeatured() {
     var prepBox = $("#featured-prep");
     if (prepBox) {
@@ -773,10 +789,8 @@
 
     var expBox = $("#featured-exp");
     if (expBox) {
-      var picks2 = ["titration", "flame-test", "iodine-clock", "silver-mirror"];
-      var items2 = picks2.map(function (id) {
-        return EXP.filter(function (p) { return p.id === id; })[0];
-      }).filter(Boolean);
+      // 实验每次访问随机推送：从首页数据池里不放回抽 4 条，顺序也打乱
+      var items2 = pickRandom(EXP, 4);
       expBox.innerHTML = items2.map(function (p) { return cardHTML(p, "e"); }).join("");
       bindCards(expBox);
     }
@@ -798,7 +812,9 @@
   function initCounts() {
     $$("[data-count]").forEach(function (el) {
       var key = el.getAttribute("data-count");
-      var n = key === "prep" ? PREP.length
+      var n = HOME && HOME.counts
+        ? (key === "prep" ? HOME.counts.prep : key === "exp" ? HOME.counts.exp : key === "all" ? HOME.counts.all : null)
+        : key === "prep" ? PREP.length
         : key === "exp" ? EXP.length
         : key === "all" ? PREP.length + EXP.length
         : null;

@@ -1342,3 +1342,53 @@ table.data td:first-child { font-weight: 600; white-space: nowrap; }
   .donate-card h2 { font-size: 19px; }
   .donate-qr { width: min(100%, 260px); }
 }
+
+/* ---------------- 资料说明（来源 / 核验 / 更新） ---------------- */
+.prov-banner {
+  margin: 16px 0 0;
+  padding: 11px 15px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.75;
+}
+.prov-banner b { color: var(--ink); font-weight: 650; }
+.prov-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.prov-list li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.prov-k {
+  flex: 0 0 auto;
+  min-width: 58px;
+  color: var(--ink-2);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+.prov-v { flex: 1 1 auto; min-width: 0; }
+.prov-note { margin-left: 8px; color: var(--muted); }
+.prov-v > b { color: var(--ink-2); font-weight: 600; }
+.prov-v em { font-style: normal; color: var(--ink-2); }
+.prov-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.6;
+}
+.prov-curated { background: rgba(93, 156, 236, 0.14); color: #4d8ede; }
+.prov-popular { background: rgba(217, 155, 62, 0.16); color: #bf8524; }
+.prov-high { background: rgba(214, 86, 86, 0.16); color: #cf4f4f; }
+
+/* perf: offscreen —— 长列表里屏幕外的条目跳过排版与绘制 */
+.card, .grid-item, .list-row { content-visibility: auto; contain-intrinsic-size: auto 132px; }
+.faq-item, .step-item { content-visibility: auto; contain-intrinsic-size: auto 72px; }
