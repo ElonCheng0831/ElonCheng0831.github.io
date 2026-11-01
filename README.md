@@ -159,7 +159,7 @@ window.CHEMLAB_ADDONS = {
 
 ## 访问统计
 
-站点使用百度统计（站点 ID `6cebbb2925bb504430e93a97a47e10e9`）记录访问量、来源与停留时间。加载逻辑在 `assets/analytics.js`，7 个页面都在 `</head>` 前引用它。
+站点使用百度统计（站点 ID `569fda17ecdd950834495bdae87446d9`）记录访问量、来源与停留时间。加载逻辑在 `assets/analytics.js`，7 个页面都在 `</head>` 前引用它。
 
 - 仅在 `http:` / `https:` 下加载；本地双击 `file://` 打开不会上报，避免污染线上数据。
 - 统计脚本来自 `hm.baidu.com`，广告拦截插件会拦截它，因此统计数会低于真实访问量。
