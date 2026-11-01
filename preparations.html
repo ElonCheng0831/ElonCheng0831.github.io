@@ -4,22 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>制造链路 · 药品图鉴 | 化境 ChemLab</title>
-<meta name="description" content="315 条常见化学品与试剂的实验室制法，以点阵制造链路展示物品、工序与产物，含风险、用途与完整工单，并可跳转合成工坊编排多步路线。">
+<meta name="description" content="325 条常见化学品与试剂的实验室制法，以点阵制造链路展示物品、工序与产物，含风险、用途与完整工单，并可跳转合成工坊编排多步路线。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230e9f8e' d='M9 2h6v5l4.5 11A2 2 0 0 1 17.6 21H6.4a2 2 0 0 1-1.9-3L9 7V2z'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="assets/chain.css">
-  <script src="assets/analytics.js"></script>
+  <script src="assets/analytics.js" defer></script>
   <meta name="theme-color" content="#0e9f8e">
   <meta name="color-scheme" content="light dark">
   <link rel="canonical" href="https://eloncheng0831.github.io/chemlab/preparations.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="化境 ChemLab">
   <meta property="og:title" content="制造链路 · 药品图鉴 | 化境 ChemLab">
-  <meta property="og:description" content="315 条常见化学品与试剂的实验室制法，以点阵制造链路展示物品、工序与产物，含风险、用途与完整工单，并可跳转合成工坊编排多步路线。">
+  <meta property="og:description" content="325 条常见化学品与试剂的实验室制法，以点阵制造链路展示物品、工序与产物，含风险、用途与完整工单，并可跳转合成工坊编排多步路线。">
   <meta property="og:url" content="https://eloncheng0831.github.io/chemlab/preparations.html">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="制造链路 · 药品图鉴 | 化境 ChemLab">
-  <meta name="twitter:description" content="315 条常见化学品与试剂的实验室制法，以点阵制造链路展示物品、工序与产物，含风险、用途与完整工单，并可跳转合成工坊编排多步路线。">
+  <meta name="twitter:description" content="325 条常见化学品与试剂的实验室制法，以点阵制造链路展示物品、工序与产物，含风险、用途与完整工单，并可跳转合成工坊编排多步路线。">
 </head>
 <body class="chain-page">
 
@@ -39,6 +39,7 @@
       <a href="experiments.html">化学实验</a>
       <a href="propellants.html">固体推进剂</a>
       <a href="cleaners.html">清洁剂成分</a>
+      <a href="tools.html">计算工具</a>
       <a href="safety.html">安全须知</a>
     </nav>
 
@@ -151,6 +152,11 @@
       <p class="chain-warn">
         教学示意：链路只表示投料顺序与操作阶段，不代表工业装置。标为高危的条目（氯气、硫化氢、铝热反应等）具有剧毒、爆炸或强腐蚀风险，仅用于认知，严禁在非专业场所尝试。
       </p>
+
+      <p class="chain-warn">
+        <b>资料说明：</b>325 条制法由编者依据通行教材与常规实验讲义整理，更新于 2026-11-01，<b>未逐条核对原文、未做实验复核</b>；每条工单末尾的「资料说明」会标出来源与核验状态。
+        抽屉里的分裂卡片只是同一产物的几种<b>知识关联</b>（同一条目族的不同做法），不代表每条都有人按此操作过；<b>风险</b>说的是操作有多危险，与「学习难度」无关。
+      </p>
     </div>
   </section>
 </main>
@@ -158,7 +164,7 @@
 <!-- 图鉴抽屉 -->
 <aside class="chain-drawer" id="chain-drawer" aria-label="药品图鉴" aria-hidden="true">
   <div class="drawer-head">
-    <h2>药品图鉴 <span id="drawer-count">315</span></h2>
+    <h2>药品图鉴 <span id="drawer-count">325</span></h2>
     <button class="drawer-close" id="drawer-close" type="button" aria-label="关闭图鉴">×</button>
   </div>
   <div class="drawer-hz" id="drawer-hz" role="group" aria-label="按风险筛选"></div>
@@ -176,6 +182,7 @@
 </footer>
 
 <script src="assets/data-preparations.js"></script>
+<script src="assets/data-meta.js"></script>
 <script src="assets/add-content.js"></script>
 <script src="assets/art.js"></script>
 <script src="assets/app.js"></script>

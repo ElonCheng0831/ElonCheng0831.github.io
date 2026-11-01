@@ -17,7 +17,7 @@
 </script>
 <link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="assets/forge.css">
-  <script src="assets/analytics.js"></script>
+  <script src="assets/analytics.js" defer></script>
   <meta name="theme-color" content="#0e9f8e">
   <meta name="color-scheme" content="light dark">
   <link rel="canonical" href="https://eloncheng0831.github.io/chemlab/forge.html">
@@ -52,6 +52,7 @@
       <a href="experiments.html">化学实验</a>
       <a href="propellants.html">固体推进剂</a>
       <a href="cleaners.html">清洁剂成分</a>
+      <a href="tools.html">计算工具</a>
       <a href="safety.html">安全须知</a>
     </nav>
     <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="切换深浅色主题" title="切换主题">
@@ -70,7 +71,7 @@
     <div>
       <p class="eyebrow">Synthesis Workbench</p>
       <h1>合成工坊 · 自动配方树</h1>
-      <p class="forge-lead">从左侧拖入任意一种药品，工坊会自动沿它的原料表逐级展开：能由站内制法生产的原料继续展开，直到落到<b>基础原料</b>或<b>已收录的制法</b>为止。每个节点都能查看制法、标记「没有」并自动换用替代制法；基础原料可以点「补足药品」记录你实际拿到的试剂。循环依赖会复用同一节点，不会无限套娃。也可以关闭自动展开，手动连线编排。</p>
+      <p class="forge-lead">点左边任意一张卡，<b>它就是要做的成品</b>。工坊会顺着原料表一层层往前推，一直推到「你自己能拿到的东西」为止，中间每一步都标出来。同一味药常有好几种做法，用下面的「<b>选一条路线</b>」逐条换，也可以一键挑步骤最少的。</p>
     </div>
     <div class="forge-actions">
       <button class="btn btn-ghost" type="button" id="forge-example">载入示例配方树</button>
@@ -79,11 +80,32 @@
     </div>
   </section>
 
+  <div class="forge-verdict" id="forge-verdict" hidden>
+    <div class="fv-top">
+      <span class="fv-label">这次要做</span>
+      <b id="fv-target">—</b>
+    </div>
+    <div class="fv-grid">
+      <div><span>总步骤</span><b id="fv-steps">—</b></div>
+      <div><span>要自备</span><b id="fv-raws">—</b></div>
+      <div><span>最高风险</span><b id="fv-risk">—</b></div>
+      <div><span>还缺</span><b id="fv-missing">—</b></div>
+    </div>
+    <p class="fv-advice" id="fv-advice"></p>
+  </div>
+
+  <ol class="forge-steps" id="forge-steps" aria-label="使用步骤">
+    <li data-step="1"><b>① 选一个成品</b><span>点左边任意一张制法卡</span></li>
+    <li data-step="2"><b>② 看要备哪些料</b><span>「原料清单」按层数列出</span></li>
+    <li data-step="3"><b>③ 定下用哪种制法</b><span>同一味药有多种做法时在这里换</span></li>
+    <li data-step="4"><b>④ 核对风险再导出</b><span>风险取整条路线最高那一级</span></li>
+  </ol>
+
   <div class="forge-layout">
     <aside class="forge-palette" aria-label="制法卡片库">
       <div class="palette-head">
         <h2>制法卡片</h2>
-        <span id="forge-count" class="palette-count">315 张</span>
+        <span id="forge-count" class="palette-count">325 张</span>
         <button class="palette-toggle" type="button" id="forge-palette-toggle" aria-expanded="true" aria-controls="forge-list">收起</button>
       </div>
       <label class="palette-search">
@@ -106,6 +128,13 @@
         </div>
         <span class="stage-hint" id="forge-mode-hint">自动展开 · 最多 5 层 · 空白处拖动平移 · 拖动卡片移动 · × 删除</span>
       </div>
+      <div class="forge-legend" aria-label="图例">
+        <span class="lg lg-target">成品（你要做的）</span>
+        <span class="lg lg-mid">中间体（站内有制法）</span>
+        <span class="lg lg-raw">基础原料（自备）</span>
+        <span class="lg lg-missing">缺失（换了也补不到）</span>
+        <span class="lg-tip">箭头方向：原料 → 上一步 → 成品 · 单击卡片只看它的上游，双击看这步的制法</span>
+      </div>
       <div class="board-scroll">
         <div class="forge-board" id="forge-board">
           <svg class="forge-edges" id="forge-edges" width="1640" height="960" aria-hidden="true"></svg>
@@ -115,15 +144,52 @@
               <rect x="8" y="16" width="44" height="22" rx="4"/><rect x="68" y="42" width="44" height="22" rx="4"/>
               <path d="M52 27h16v26h-0" stroke-dasharray="4 4"/><path d="m64 50 4 4 4-4"/>
             </svg>
-            <p>把左侧的药品卡片拖到这里</p>
+            <p>先点左边一张卡，或直接看个例子</p>
             <p class="board-empty-sub">工坊会自动补齐它的全套原料与前置制法</p>
+            <button class="btn btn-primary btn-small" type="button" id="forge-empty-example">载入示例</button>
           </div>
+        </div>
+      </div>
+
+      <div class="pick-panel" id="forge-picker">
+        <div class="pick-head">
+          <h2>选一条路线 · 中间物质也能换制法</h2>
+          <span class="pick-note">同一味药常有好几种制法：成品那一行决定主路线，中间物质那几行决定这一步从哪来</span>
+        </div>
+        <div class="pick-actions">
+          <button class="btn btn-ghost btn-small" type="button" id="forge-pick-auto">自动挑步骤最少的</button>
+          <button class="btn btn-ghost btn-small" type="button" id="forge-pick-reset">恢复默认选择</button>
+        </div>
+        <div class="pick-list" id="forge-pick-list">
+          <p class="pick-idle">先拖一张制法卡片进来。有多条制法的节点会出现在这里，改成你想要的那一条即可。</p>
+        </div>
+      </div>
+
+      <div class="ion-panel" id="forge-ions">
+        <div class="ion-head">
+          <h2>盐类阴阳离子检索</h2>
+          <span class="ion-note">行是阳离子、列是阴离子，交叉的格子就是这种盐；表能上下左右拖。写「N 法」的格子里有好几条制法，点开自己挑一条</span>
+        </div>
+        <div class="salt-scroll" id="ion-scroll">
+          <table class="salt-table" id="ion-table"></table>
+        </div>
+        <div class="salt-rare" id="ion-rare" hidden>
+          <div class="salt-rare-head">
+            <h3>少量离子盐类</h3>
+            <p>这些盐的阳离子或阴离子站内只收录了一两种，排不进上表，单独列在这里。</p>
+          </div>
+          <div class="salt-rare-list" id="ion-rare-list"></div>
+        </div>
+        <div class="ion-pick" id="ion-pick" hidden></div>
+        <div class="ion-foot">
+          <button class="btn btn-ghost btn-small" type="button" id="ion-clear">清除选择</button>
+          <span class="ion-count" id="ion-count"></span>
         </div>
       </div>
 
       <div class="deps-panel" id="forge-deps-panel">
         <div class="deps-head">
-          <h2>依赖清单</h2>
+          <h2>原料清单</h2>
           <span id="forge-dep-count" class="deps-count">0 项</span>
         </div>
         <div class="deps-tools">
@@ -134,14 +200,15 @@
           <button class="btn btn-ghost btn-small" type="button" id="forge-reflow">重排图层</button>
         </div>
         <div class="deps-list" id="forge-deps-list">
-          <p class="deps-idle">还没有依赖。拖一个药品进来，这里会列出每一层原料、缺少的药品和可替换的制法。</p>
+          <p class="deps-idle">还没有原料清单。拖一个药品进来，这里会按层级列出每一步要用的药和它们的制法。</p>
         </div>
-        <p class="deps-note">「基础原料」表示站内没有它的制法，需要自备；点路线里的「补足药品」可以记录实际补入的试剂，随路线保存与导出。标记「缺失」后若有替代制法会自动切换，没有替代制法时会保留缺失标记。循环依赖复用同一节点，避免无限展开。</p>
+        <p class="deps-note">「基础原料」= 站内没有它的制法，自己备料即可。点「补足药品」可以记下你实际拿到的试剂，随路线一起保存和导出。标「缺失」后若有替代制法会自动换一条，没有替代制法就保留红色缺失标记。同一种药只出现一次，循环依赖用复用节点表示，不会无限套娃。</p>
       </div>
 
       <div class="route-panel" id="forge-route-panel">
         <div class="route-head">
-          <h2>路线解读</h2>
+          <h2>按顺序怎么做</h2>
+          <span id="forge-summary" class="route-summary"></span>
           <span id="forge-risk" class="route-risk">风险 —</span>
         </div>
         <ol class="route-list" id="forge-route-list">
@@ -153,12 +220,12 @@
   </div>
 
   <section class="forge-guide">
-    <h2>怎么读一张配方树</h2>
+    <h2>三步上手</h2>
     <div class="guide-grid">
-      <article><b>① 自动展开</b><p>从目标药品的原料表出发，逐级寻找站内制法；展开到没有制法的基础原料，或复用到已经出现的节点时停止。</p></article>
-      <article><b>② 标记与换源</b><p>依赖清单里每个节点都有「制法 / 换源 / 缺失」：缺源可自动切换另一种制法；标了「缺失」的药品在图上与清单里都会变红。</p></article>
-      <article><b>③ 不套娃</b><p>同一种药品只保留一个节点，循环依赖用复用连线表示；展开深度上限 5 层，避免无限递归。</p></article>
-      <article><b>④ 风险与导出</b><p>风险取整棵树里最高等级。导出的文本会按投料顺序列出每一步、补入的原料（含「补足药品」记录）和基础原料清单。</p></article>
+      <article><b>① 选一个成品</b><p>从左边点任意一张制法卡片，它就是你要做的成品。工坊会自动把它的原料一层层往前推，并把整棵树缩放到刚好放得下。</p></article>
+      <article><b>② 看中间那栏「原料清单」</b><p>每一行就是一样要准备的东西，前面的「第几层」告诉你它离成品有多远：带「站内制法」的可以继续往上找，标「基础原料」的就是自己备料。</p></article>
+      <article><b>③ 用「选一条路线」定下制法</b><p>同一味药有多种做法时，下拉框里逐条换；懒的话点「自动挑步骤最少的」，它按落到基础原料的层数排序。</p></article>
+      <article><b>④ 核对风险，再导出</b><p>风险取整条路线的最高等级。导出的是纯文本，按投料顺序列每一步、补入的原料和基础原料清单。</p></article>
     </div>
   </section>
 </main>

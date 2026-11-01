@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算工具 · 化境 ChemLab</title>
+<meta name="description" content="化境 ChemLab 的计算工具：摩尔浓度与质量分数互转（含摩尔质量计算），化学方程式自动配平并给出摩尔比、简化质量比与站内条目跳转。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230e9f8e' d='M9 2h6v5l4.5 11A2 2 0 0 1 17.6 21H6.4a2 2 0 0 1-1.9-3L9 7V2z'/%3E%3C/svg%3E">
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("chemlab-theme");
+      if (!t) t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/tools.css">
+<meta name="theme-color" content="#0e9f8e">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://eloncheng0831.github.io/chemlab/tools.html">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html" aria-label="化境 ChemLab 首页">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v5l4.5 11A2 2 0 0 1 17.6 22H6.4a2 2 0 0 1-1.9-3L9 8Z"/><path d="M7 15h10"/></svg>
+      </span>
+      <span>化境 ChemLab<small>Preparation &amp; Experiment</small></span>
+    </a>
+
+    <nav class="nav-links" id="nav-links" aria-label="主导航">
+      <a href="index.html">首页</a>
+      <a href="preparations.html">药品制法</a>
+      <a href="forge.html">合成工坊</a>
+      <a href="experiments.html">化学实验</a>
+      <a href="propellants.html">固体推进剂</a>
+      <a href="cleaners.html">清洁剂成分</a>
+      <a href="tools.html" aria-current="page">计算工具</a>
+      <a href="safety.html">安全须知</a>
+    </nav>
+
+    <button class="icon-btn theme-toggle" type="button" aria-label="切换主题">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+
+    <button class="icon-btn nav-toggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="page-head">
+    <div class="wrap">
+      <nav class="breadcrumb" aria-label="面包屑">
+        <a href="index.html">首页</a>
+        <span>/</span>
+        <span>计算工具</span>
+      </nav>
+      <h1>计算工具</h1>
+      <p>
+        两个常被算错的东西：<b>溶液浓度</b>（摩尔浓度和质量分数之间的换算，要带上密度和摩尔质量）和<b>方程式配平</b>（配完顺手给出摩尔比和简化质量比）。
+        结果里凡是站内收录过的物质，都能一键跳过去看它的制法和实验。
+      </p>
+
+      <div class="calc-tabs" role="tablist" aria-label="选择工具">
+        <button type="button" class="calc-tab is-on" role="tab" id="tab-conc" aria-selected="true" aria-controls="panel-conc" data-panel="conc">浓度换算</button>
+        <button type="button" class="calc-tab" role="tab" id="tab-eq" aria-selected="false" aria-controls="panel-eq" data-panel="eq">方程式配平</button>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-bottom: 30px;">
+    <div class="wrap">
+
+      <!-- ---------- 浓度换算 ---------- -->
+      <div class="calc-panel is-on" id="panel-conc" role="tabpanel" aria-labelledby="tab-conc">
+        <div class="calc-grid">
+          <div class="calc-card">
+            <h2>1 · 先确认溶质</h2>
+            <p class="calc-hint">输入化学式，比如 <button type="button" class="mini" data-fill="H2SO4">H2SO4</button> <button type="button" class="mini" data-fill="NaOH">NaOH</button> <button type="button" class="mini" data-fill="CuSO4·5H2O">CuSO4·5H2O</button>，支持结晶水与括号。</p>
+            <label class="calc-field">
+              <span>溶质化学式</span>
+              <input id="conc-formula" type="text" value="H2SO4" autocomplete="off" spellcheck="false" aria-label="溶质化学式">
+            </label>
+            <div class="calc-mass" id="conc-mass" aria-live="polite"></div>
+          </div>
+
+          <div class="calc-card">
+            <h2>2 · 再填已知量</h2>
+            <p class="calc-hint">密度不知道可以先留 1.00（稀溶液近似）。改哪一行的数字，就由哪一行往另一边算。</p>
+            <div class="calc-row">
+              <label class="calc-field">
+                <span>质量分数 w（%）</span>
+                <input id="conc-w" type="number" min="0.001" max="99.9" step="0.01" inputmode="decimal" aria-label="质量分数百分比">
+              </label>
+              <label class="calc-field">
+                <span>物质的量浓度 c（mol/L）</span>
+                <input id="conc-c" type="number" min="0.0001" step="0.0001" inputmode="decimal" aria-label="物质的量浓度">
+              </label>
+              <label class="calc-field">
+                <span>溶液密度 ρ（g/mL）</span>
+                <input id="conc-rho" type="number" min="0.05" max="5" step="0.001" value="1.00" inputmode="decimal" aria-label="溶液密度">
+              </label>
+            </div>
+            <div class="calc-out" id="conc-out" aria-live="polite"></div>
+            <p class="calc-formula" id="conc-formula-note">w% = c × M ÷ (10 × ρ)　　c = 10 × ρ × w% ÷ M</p>
+          </div>
+        </div>
+
+        <div class="calc-card calc-card-wide">
+          <h2>3 · 或者直接溶固体：质量 → 浓度</h2>
+          <div class="calc-row">
+            <label class="calc-field">
+              <span>称取质量 m（g）</span>
+              <input id="diss-m" type="number" min="0.0001" step="0.0001" value="4.9" inputmode="decimal" aria-label="称取质量">
+            </label>
+            <label class="calc-field">
+              <span>定容体积 V（mL）</span>
+              <input id="diss-v" type="number" min="0.01" step="0.01" value="100" inputmode="decimal" aria-label="定容体积">
+            </label>
+            <div class="calc-field">
+              <span>算出来的浓度</span>
+              <div class="calc-out calc-out-inline" id="diss-out" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- 方程式配平 ---------- -->
+      <div class="calc-panel" id="panel-eq" role="tabpanel" aria-labelledby="tab-eq" hidden>
+        <div class="calc-card calc-card-wide">
+          <h2>输入方程式</h2>
+          <p class="calc-hint">
+            用 <code>+</code> 连接物质，用 <code>-&gt;</code> 或 <code>=</code> 分开两边。
+            例：<button type="button" class="mini" data-eq="KMnO4 + HCl -> KCl + MnCl2 + Cl2 + H2O">高锰酸钾与盐酸</button>
+            <button type="button" class="mini" data-eq="C3H8 + O2 -> CO2 + H2O">丙烷燃烧</button>
+            <button type="button" class="mini" data-eq="Fe + O2 -> Fe2O3">铁生锈</button>
+            <button type="button" class="mini" data-eq="CuSO4·5H2O -> CuSO4 + H2O">胆矾脱水</button>
+          </p>
+          <textarea id="eq-input" rows="2" spellcheck="false" aria-label="化学方程式">Fe + O2 -> Fe2O3</textarea>
+          <div class="calc-actions">
+            <button type="button" class="btn btn-accent" id="eq-run">配平</button>
+            <span class="calc-status" id="eq-status" aria-live="polite"></span>
+          </div>
+
+          <div id="eq-result" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <p class="calc-note">
+        计算用的是标准原子量（IUPAC 常用值，几位有效数字），没有考虑活度系数、温度带来的体积变化和气体非理想性；
+        配平结果只保证原子守恒，<b>不判断反应能否发生、条件与速率</b>。质量比是给配料估算用的近似整数比，别当成分析结果。
+        所有跳转都只是站内资料关联，不代表这条反应被验证过。
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h5>化境 ChemLab</h5>
+        <p>一份写给学生的化学制法与实验手册。内容以基础化学教材与常规实验讲义为依据整理，重在讲清原理与风险，不追求“炫技”。</p>
+      </div>
+      <div>
+        <h5>目录</h5>
+        <ul>
+          <li><a href="preparations.html">药品制法</a></li>
+          <li><a href="experiments.html">化学实验</a></li>
+          <li><a href="forge.html">合成工坊</a></li>
+          <li><a href="tools.html">计算工具</a></li>
+          <li><a href="safety.html">安全须知</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>提示</h5>
+        <p>本站内容仅用于教学与科普，不构成任何操作指导。实验须在具备资质的场所、由专业人员指导完成。</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span data-year>2026</span> 化境 ChemLab · 教学演示站点</span>
+      <span>原理 · 步骤 · 现象 · 风险</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/data-index.js"></script>
+<script src="assets/chem-core.js"></script>
+<script src="assets/tools.js"></script>
+<script>
+  (function () {
+    var root = document.documentElement;
+    try {
+      var t = localStorage.getItem("chemlab-theme");
+      if (t) root.setAttribute("data-theme", t);
+    } catch (e) {}
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        try { localStorage.setItem("chemlab-theme", next); } catch (e) {}
+      });
+    });
+    var toggle = document.querySelector(".nav-toggle");
+    var links = document.querySelector(".nav-links");
+    if (toggle && links) {
+      toggle.addEventListener("click", function () {
+        var open = links.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+    var nav = document.querySelector(".nav");
+    if (nav) {
+      var onScroll = function () { nav.classList.toggle("is-scrolled", window.scrollY > 8); };
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+    }
+    document.querySelectorAll("[data-year]").forEach(function (el) {
+      el.textContent = new Date().getFullYear();
+    });
+  })();
+</script>
+</body>
+</html>
