@@ -1392,3 +1392,6 @@ table.data td:first-child { font-weight: 600; white-space: nowrap; }
 /* perf: offscreen —— 长列表里屏幕外的条目跳过排版与绘制 */
 .card, .grid-item, .list-row { content-visibility: auto; contain-intrinsic-size: auto 132px; }
 .faq-item, .step-item { content-visibility: auto; contain-intrinsic-size: auto 72px; }
+
+/* 详情里「正在载入」的占位文字 */
+.body-text.muted { color: var(--text-3, #6b7480); font-style: italic; }

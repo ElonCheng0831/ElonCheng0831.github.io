@@ -135,6 +135,42 @@
   var HOME = window.CHEMLAB_HOME || null;
   var PREP = window.PREPARATIONS || (HOME ? HOME.prep : []);
   var EXP = window.EXPERIMENTS || (HOME ? HOME.exp : []);
+  /* 详情用的长段落（器材/现象/注意事项/结论）按需加载，首屏只下核心字段 */
+  var PROSE_SRC = { p: "assets/data-preparations-prose.js", e: "assets/data-experiments-prose.js" };
+  var PROSE_VAR = { p: "PREP_PROSE", e: "EXP_PROSE" };
+  var proseState = { p: 0, e: 0 };
+  var proseWaiters = { p: [], e: [] };
+  function applyProse(type) {
+    var map = window[PROSE_VAR[type]] || {};
+    var list = type === "p" ? PREP : EXP;
+    for (var i = 0; i < list.length; i++) {
+      var extra = map[list[i].id];
+      if (!extra) continue;
+      for (var k in extra) {
+        if (Object.prototype.hasOwnProperty.call(extra, k) && list[i][k] === undefined) list[i][k] = extra[k];
+      }
+    }
+  }
+  function ensureProse(type, cb) {
+    if (typeof cb === "function") {
+      if (proseState[type] === 2) { cb(); return; }
+      proseWaiters[type].push(cb);
+    }
+    if (proseState[type] !== 0) return;
+    proseState[type] = 1;
+    var s = document.createElement("script");
+    s.src = PROSE_SRC[type];
+    s.async = true;
+    s.onload = function () {
+      applyProse(type);
+      proseState[type] = 2;
+      var q = proseWaiters[type];
+      proseWaiters[type] = [];
+      for (var i = 0; i < q.length; i++) { try { q[i](); } catch (err) { /* ignore */ } }
+    };
+    s.onerror = function () { proseState[type] = 3; proseWaiters[type] = []; };
+    document.head.appendChild(s);
+  }
   var factoryMode = document.body.classList.contains("factory");
   var chainMode = document.body.classList.contains("chain-page");
 
@@ -536,6 +572,10 @@
       );
     }
 
+    if (!item.cautions && proseState[type] !== 2) {
+      out.push('<div class="block"><h4>注意事项</h4><p class="body-text muted">这一条的完整内容正在载入…</p></div>');
+    }
+
     if (item.cautions && item.cautions.length) {
       out.push(
         '<div class="block"><h4>注意事项</h4><ul class="list-plain">' +
@@ -583,6 +623,13 @@
       "</div>";
 
     $(".sheet-body", d).innerHTML = detailHTML(item, type);
+
+    /* 长段落还没到就先渲染核心内容，到了再原地补一次 */
+    ensureProse(type, function () {
+      if (!d.open) return;
+      var body = $(".sheet-body", d);
+      if (body) body.innerHTML = detailHTML(item, type);
+    });
 
     document.body.style.overflow = "hidden";
     if (typeof d.showModal === "function") {
@@ -910,6 +957,12 @@
     observeReveals();
     initDeepLink();
 
+    /* 空闲时把详情段落补下来，第一次点开基本就是瞬时 */
+    setTimeout(function () {
+      if (window.EXPERIMENTS) ensureProse("e");
+      if (window.PREPARATIONS) ensureProse("p");
+    }, 1400);
+
     $$("[data-year]").forEach(function (el) {
       el.textContent = String(new Date().getFullYear());
     });
@@ -921,6 +974,7 @@
     closeDetail: closeDetail,
     renderCard: cardHTML,
     renderDetail: detailHTML,
+    loadProse: ensureProse,
     reagentRole: reagentRole,
     factoryMode: factoryMode
   };

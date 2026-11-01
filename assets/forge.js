@@ -39,12 +39,6 @@
   var pickAutoEl = document.getElementById("forge-pick-auto");
   var pickResetEl = document.getElementById("forge-pick-reset");
   var summaryEl = document.getElementById("forge-summary");
-  var ionTableEl = document.getElementById("ion-table");
-  var ionRareEl = document.getElementById("ion-rare");
-  var ionRareListEl = document.getElementById("ion-rare-list");
-  var ionPickEl = document.getElementById("ion-pick");
-  var ionCountEl = document.getElementById("ion-count");
-  var ionClearEl = document.getElementById("ion-clear");
   var stepsEl = document.getElementById("forge-steps");
   var verdictEl = document.getElementById("forge-verdict");
   var fvTargetEl = document.getElementById("fv-target");
@@ -1627,206 +1621,6 @@
     renderPicker();
     scheduleSave();
   }
-  /* ---------------- 盐类阴阳离子检索（交叉表） ---------------- */
-  var ION_SALTS = DATA.filter(function (d) {
-    return d && d.ions && d.ions.length === 2 && d.ions[0] && d.ions[1];
-  });
-  // 行列顺序参考制法页的盐表，常用离子在前
-  var CATION_ORDER = ["H⁺", "Li⁺", "Na⁺", "K⁺", "NH₄⁺", "Mg²⁺", "Ca²⁺", "Sr²⁺", "Ba²⁺", "Al³⁺", "Cr³⁺", "Mn²⁺", "Fe²⁺", "Fe³⁺", "Co²⁺", "Ni²⁺", "Cu⁺", "Cu²⁺", "Zn²⁺", "Ag⁺", "Pb²⁺", "Sn²⁺"];
-  var ANION_ORDER = ["OH⁻", "Cl⁻", "Br⁻", "I⁻", "NO₃⁻", "NO₂⁻", "SO₄²⁻", "HSO₄⁻", "HSO₃⁻", "CO₃²⁻", "HCO₃⁻", "PO₄³⁻", "HPO₄²⁻", "H₂PO₄⁻", "SiO₃²⁻", "S₂O₃²⁻", "SO₃²⁻", "MnO₄⁻", "ClO₃⁻", "ClO₄⁻", "BrO₃⁻", "IO₃⁻", "CrO₄²⁻", "Cr₂O₇²⁻", "S²⁻", "C₂O₄²⁻", "CH₃COO⁻", "F⁻", "SCN⁻"];
-  var RARE_MIN = 2;
-  var ionState = { c: "", a: "", pickKey: "" };
-
-  function sortIons(list, order) {
-    return list.slice().sort(function (x, y) {
-      var ix = order.indexOf(x), iy = order.indexOf(y);
-      if (ix < 0) ix = 999;
-      if (iy < 0) iy = 999;
-      if (ix !== iy) return ix - iy;
-      return x.localeCompare(y, "zh");
-    });
-  }
-
-  function ionCounts(list, index) {
-    var counts = {};
-    list.forEach(function (d) { counts[d.ions[index]] = (counts[d.ions[index]] || 0) + 1; });
-    return counts;
-  }
-
-  function mainAxis(counts, order) {
-    var out = order.filter(function (x) { return (counts[x] || 0) >= RARE_MIN; });
-    Object.keys(counts).sort().forEach(function (x) {
-      if (counts[x] >= RARE_MIN && out.indexOf(x) === -1) out.push(x);
-    });
-    return out;
-  }
-
-  function splitSalts(list) {
-    var rows = mainAxis(ionCounts(list, 0), CATION_ORDER);
-    var cols = mainAxis(ionCounts(list, 1), ANION_ORDER);
-    var main = [], rare = [];
-    list.forEach(function (d) {
-      if (rows.indexOf(d.ions[0]) !== -1 && cols.indexOf(d.ions[1]) !== -1) main.push(d);
-      else rare.push(d);
-    });
-    return { rows: rows, cols: cols, main: main, rare: rare };
-  }
-
-  function methodWord(item) {
-    var n = altMethodsFor(item).length;
-    return n > 1 ? n + " 法" : (item.formula || "—");
-  }
-
-  function renderIonRare(list) {
-    if (!ionRareEl || !ionRareListEl) return;
-    ionRareEl.hidden = !list.length;
-    ionRareListEl.innerHTML = list.map(function (d) {
-      var n = altMethodsFor(d).length;
-      return '<button type="button" class="salt-chip" data-salt="' + esc(d.id) + '">' +
-        "<b>" + esc(d.formula || "—") + "</b><span>" + esc(d.name) + "</span>" +
-        (n > 1 ? '<em>' + n + " 法</em>" : "") + "</button>";
-    }).join("");
-  }
-
-  function clearIonMark() {
-    if (!ionTableEl) return;
-    var cells = ionTableEl.querySelectorAll(".salt-cell.is-active");
-    for (var i = 0; i < cells.length; i++) cells[i].classList.remove("is-active");
-    if (ionRareListEl) {
-      var chips = ionRareListEl.querySelectorAll(".salt-chip.is-active");
-      for (var j = 0; j < chips.length; j++) chips[j].classList.remove("is-active");
-    }
-  }
-
-  function ionChoiceHTML(list, cation, anion) {
-    var head = '<div class="ion-pick-head"><b>「' + esc(cation) + " × " + esc(anion) +
-      "」有 " + list.length + " 条制法</b><span>选一条当成品，右下角的配方树就按它展开</span></div>";
-    var rows = list.map(function (d, i) {
-      var n = (d.steps || []).length;
-      return '<button type="button" class="salt-choice" data-build="' + esc(d.id) + '">' +
-        '<span class="pick-no">' + String(i + 1).padStart(2, "0") + "</span>" +
-        '<span class="pick-body">' +
-          "<b>" + esc(d.name) + "</b>" +
-          "<small>" + esc(d.formula || "—") + " · 风险 " + esc(d.hazard || "-") + " · " + n + " 道工序</small>" +
-        "</span>" +
-        '<span class="pick-go">用作成品 →</span>' +
-      "</button>";
-    }).join("");
-    return head + '<div class="salt-choice-list">' + rows + "</div>";
-  }
-
-  function renderIonPick(list, cation, anion) {
-    if (!ionPickEl) return;
-    if (!list || !list.length) { ionPickEl.hidden = true; ionPickEl.innerHTML = ""; return; }
-    ionPickEl.hidden = false;
-    ionPickEl.innerHTML = ionChoiceHTML(list, cation, anion);
-  }
-
-  function renderIonTable() {
-    if (!ionTableEl) return;
-    var split = splitSalts(ION_SALTS);
-    var cells = {};
-    split.main.forEach(function (d) {
-      var key = d.ions[0] + "|" + d.ions[1];
-      (cells[key] = cells[key] || []).push(d);
-    });
-    renderIonRare(split.rare);
-    if (ionCountEl) {
-      ionCountEl.textContent = "共收录 " + ION_SALTS.length + " 种带离子数据的盐 · 主表 " +
-        split.main.length + " 种 · 少量离子 " + split.rare.length + " 种";
-    }
-    var html = '<thead><tr><th class="salt-corner" scope="col">阳离子 \\ 阴离子</th>';
-    split.cols.forEach(function (a) { html += '<th scope="col">' + esc(a) + "</th>"; });
-    html += "</tr></thead><tbody>";
-    split.rows.forEach(function (c) {
-      html += '<tr><th scope="row">' + esc(c) + "</th>";
-      split.cols.forEach(function (a) {
-        var list = cells[c + "|" + a];
-        if (!list) { html += '<td class="salt-none">·</td>'; return; }
-        var label = list.length > 1 ? list.length + " 法" : (list[0].formula || "—");
-        var name = list.map(function (d) { return d.name; }).join(" / ");
-        html += '<td><button type="button" class="salt-cell" data-c="' + esc(c) + '" data-a="' + esc(a) +
-          '" title="' + esc(name) + '"><b>' + esc(label) + "</b><small>" + esc(name) + "</small></button></td>";
-      });
-      html += "</tr>";
-    });
-    ionTableEl.innerHTML = html + "</tbody>";
-  }
-
-  function renderIons() {
-    renderIonTable();
-    if (ionPickEl) { ionPickEl.hidden = true; ionPickEl.innerHTML = ""; }
-    clearIonMark();
-    ionState.pickKey = "";
-  }
-
-  function buildFromIon(id) {
-    var item = ID_INDEX[id];
-    if (!item) return;
-    if (autoEl && !autoEl.checked) {
-      autoEl.checked = true;
-      state.auto = true;
-      document.body.classList.add("mode-auto");
-      document.body.classList.remove("mode-manual");
-    }
-    buildTree(id);
-    setStatus("已按「" + item.name + "」展开配方树（盐类检索）");
-    if (board && board.scrollIntoView) board.scrollIntoView({ block: "start", behavior: "smooth" });
-  }
-
-  function pickFromCell(cation, anion, btn) {
-    var list = ION_SALTS.filter(function (d) { return d.ions[0] === cation && d.ions[1] === anion; });
-    if (!list.length) return;
-    clearIonMark();
-    if (btn) btn.classList.add("is-active");
-    var key = cation + "|" + anion;
-    if (list.length === 1 && altMethodsFor(list[0]).length === 1) { buildFromIon(list[0].id); return; }
-    if (ionState.pickKey === key) { renderIonPick(null); ionState.pickKey = ""; return; }
-    ionState.pickKey = key;
-    renderIonPick(list, cation, anion);
-    if (ionPickEl && ionPickEl.scrollIntoView) ionPickEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }
-
-  if (ionTableEl) {
-    ionTableEl.addEventListener("click", function (e) {
-      var cell = e.target.closest(".salt-cell");
-      if (!cell) return;
-      pickFromCell(cell.getAttribute("data-c"), cell.getAttribute("data-a"), cell);
-    });
-  }
-  if (ionRareListEl) {
-    ionRareListEl.addEventListener("click", function (e) {
-      var chip = e.target.closest(".salt-chip");
-      if (!chip) return;
-      var id = chip.getAttribute("data-salt");
-      var item = ID_INDEX[id];
-      if (!item) return;
-      clearIonMark();
-      chip.classList.add("is-active");
-      if (altMethodsFor(item).length > 1) {
-        ionState.pickKey = "rare:" + id;
-        renderIonPick([item], item.ions[0], item.ions[1]);
-        return;
-      }
-      buildFromIon(id);
-    });
-  }
-  if (ionPickEl) {
-    ionPickEl.addEventListener("click", function (e) {
-      var btn = e.target.closest("[data-build]");
-      if (!btn) return;
-      buildFromIon(btn.getAttribute("data-build"));
-    });
-  }
-  if (ionClearEl) {
-    ionClearEl.addEventListener("click", function () {
-      ionState.c = "";
-      ionState.a = "";
-      ionState.pickKey = "";
-      renderIons();
-    });
-  }
-
   function renderAll() {
     renderEdges();
     renderRoute();
@@ -2125,7 +1919,6 @@
     ? "双指缩放 · 单指平移 · 点卡片只看它的上游"
     : (state.auto ? "点卡片只看这条上游 · 双击看制法 · 拖动平移画布" : "手动编排 · 拖动卡片 · 从右侧圆点拉线");
 
-  renderIons();
 
   window.ChemForge = {
     state: state,
@@ -2149,7 +1942,6 @@
     renderPicker: renderPicker,
     pickCheapest: pickCheapest,
     resetPicks: resetPicks,
-    expandReagents: findProducers,
-    renderIons: renderIons
+    expandReagents: findProducers
   };
 })();
