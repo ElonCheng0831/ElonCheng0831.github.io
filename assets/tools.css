@@ -398,3 +398,210 @@ html[data-theme="dark"] .btn-accent { color: #04231f; }
   text-underline-offset: 3px;
   cursor: pointer;
 }
+
+/* ---------------- 反应预测 ---------------- */
+.rx-form {
+  display: grid;
+  grid-template-columns: 1fr 190px;
+  gap: 14px;
+  align-items: start;
+  margin-block: 6px 10px;
+}
+.rx-side { display: flex; flex-direction: column; gap: 8px; }
+.rx-label { font-size: 12px; font-weight: 600; color: var(--muted, #6b7a76); letter-spacing: 0.04em; }
+.rx-side select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  background: var(--bg-soft);
+  color: inherit;
+  font: inherit;
+}
+.rx-caveat { margin-top: 14px; }
+.rx-item {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+  border-radius: 14px;
+  background: var(--surface);
+}
+.rx-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.rx-cond {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--accent, #1f8f7a) 14%, transparent);
+  color: var(--accent-deep, #146b5c);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.rx-note { font-size: 12.5px; color: var(--muted, #6b7a76); }
+.rx-foot { margin-top: 10px; font-size: 12.5px; color: var(--muted, #6b7a76); }
+.rx-warn { color: #b4472e; font-size: 12.5px; }
+.rx-empty { margin-top: 12px; padding: 14px 16px; border-radius: 12px; background: rgba(0, 0, 0, 0.04); font-size: 13.5px; }
+
+/* 产物选择弹窗 */
+.rx-dialog {
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 18px;
+  padding: 0;
+  max-width: min(620px, calc(100vw - 32px));
+  background: var(--bg);
+  color: inherit;
+  box-shadow: 0 30px 80px -30px rgba(10, 30, 25, 0.55);
+}
+.rx-dialog::backdrop { background: rgba(6, 16, 14, 0.45); }
+.rx-dialog-inner { padding: 22px 24px 20px; }
+.rx-dialog h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -0.02em; }
+.rx-dialog-hint { margin: 0 0 14px; font-size: 13px; color: var(--muted, #6b7a76); }
+.rx-opts { display: flex; flex-direction: column; gap: 8px; }
+.rx-opt {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 13px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.rx-opt:hover { border-color: var(--accent, #1f8f7a); }
+.rx-opt input { margin-top: 3px; accent-color: var(--accent, #1f8f7a); }
+.rx-opt-body { display: flex; flex-direction: column; gap: 3px; }
+.rx-opt-eq { font-size: 14.5px; font-weight: 600; }
+.rx-opt-cond { font-size: 12.5px; color: var(--muted, #6b7a76); }
+.rx-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+/* ---------------- 沸点参考 ---------------- */
+.bp-search-row { display: flex; align-items: center; gap: 12px; margin-block: 4px 14px; }
+.bp-search-row input[type="search"] {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  background: var(--bg-soft);
+  color: inherit;
+  font: inherit;
+}
+.bp-count { font-size: 12.5px; color: var(--muted, #6b7a76); white-space: nowrap; }
+.bp-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.bp-table th, .bp-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+  text-align: left;
+}
+.bp-table th { font-size: 12px; font-weight: 600; color: var(--muted, #6b7a76); letter-spacing: 0.04em; }
+.bp-table td.mono { font-family: var(--mono, ui-monospace, monospace); }
+.bp-table tr:hover td { background: rgba(0, 0, 0, 0.03); }
+.bp-decomp { color: #b4472e; }
+
+@media (max-width: 720px) {
+  .rx-form { grid-template-columns: 1fr; }
+  .rx-side { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .rx-side select { width: auto; flex: 1 1 140px; }
+  .bp-table th:nth-child(4), .bp-table td:nth-child(4) { display: none; }
+}
+/* 浓度卡片：质量分数 / 浓度 / 密度 / 沸点 四项排一行 */
+.calc-row-4 { grid-template-columns: repeat(3, minmax(0, 1fr)) 0.78fr; }
+#conc-bp {
+  cursor: default;
+  color: var(--ink-soft, var(--ink));
+  background: var(--bg-soft, transparent);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+  .calc-row-4 { grid-template-columns: minmax(0, 1fr); }
+}
+
+
+/* 反应表“相近条目”一键填入 */
+.rx-near-label { display: inline-block; margin: 8px 8px 0 0; opacity: 0.8; }
+.rx-near {
+  margin: 8px 6px 0 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color 0.2s linear, color 0.2s linear, transform 0.2s var(--ease-out);
+}
+.rx-near:hover { border-color: var(--accent); color: var(--accent-deep); transform: translateY(-1px); }
+
+/* ============================================================
+   计算工具 · 质感层 v3
+   ============================================================ */
+
+/* 输入区：聚焦时给一层柔光，而不是只有一圈硬边框 */
+#eq-input,
+#conc-wField input,
+#conc-cField input,
+#conc-rhoField input,
+#bp-search {
+  transition: border-color 0.2s linear, box-shadow 0.24s var(--ease-out), background-color 0.2s linear;
+}
+
+#eq-input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent),
+    0 12px 30px -24px var(--accent-deep);
+}
+
+/* 结果式子：放大 + 数字等宽 + 上下文留白 */
+#eq-result .eq-line {
+  font-size: clamp(17px, 2.1vw, 21px);
+  letter-spacing: 0.01em;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 2px;
+}
+
+/* 选项卡：激活项加一点实心阴影，层级更清楚 */
+.tabs .tab[aria-selected="true"],
+.tabs button[aria-selected="true"] {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 8px 18px -14px var(--ink);
+}
+
+/* 状态行：成功/失败用左侧细竖线标记，比整行变色克制 */
+#eq-status,
+#conc-status {
+  border-left: 2px solid transparent;
+  padding-left: 10px;
+  transition: border-color 0.2s linear, color 0.2s linear;
+}
+
+#eq-status.is-ok { border-left-color: color-mix(in srgb, var(--ok) 70%, transparent); }
+#eq-status.is-bad { border-left-color: color-mix(in srgb, var(--warn) 70%, transparent); }
+
+/* 推断出来的条目：和表内条目区分（结果下方加一行说明） */
+#eq-result[data-inferred="1"]::after {
+  content: "↑ 由反应规律推断，不在常见反应表内";
+  display: block;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+/* 相近条目按钮：等宽小字，像标签而不是按钮 */
+#eq-status .rx-near {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.01em;
+}
+
+#rx-result[data-inferred="1"]::after {
+  content: "↑ 由反应规律推断，不在常见反应表内";
+  display: block;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}

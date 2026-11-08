@@ -75,7 +75,7 @@
           if (on) panels[k].removeAttribute("hidden");
           else panels[k].setAttribute("hidden", "");
         });
-        if (name === "eq") runEquation();
+        if (name === "eq") runEquation({ noComplete: true });
       });
     });
   }
@@ -91,6 +91,7 @@
       c: $("#conc-c"),
       rho: $("#conc-rho"),
       rhoField: $("#conc-rho-field"),
+      bp: $("#conc-bp"),
       ref: $("#conc-densref"),
       out: $("#conc-out"),
       m: $("#diss-m"),
@@ -205,9 +206,40 @@
     computeConc();
   }
 
+  // 溶质的常压沸点（查 chem-core 的 BOILING 表）
+  function renderBoiling(el) {
+    var box = el.bp;
+    if (!box || !el.formula) return;
+    var name = String(el.formula.value || "").trim();
+    if (!name) { box.value = "—"; box.removeAttribute("title"); box.classList.remove("is-muted"); return; }
+
+    var w = parseFloat(el.w.value);
+    var pure = Core.boilingOf ? Core.boilingOf(name) : null;
+    var sol = (Core.solutionBp && isFinite(w)) ? Core.solutionBp(name, w) : null;
+
+    if (sol) {
+      if (sol.kind === "volatile") {
+        box.value = sol.value === null ? "—" : sol.value;
+        box.title = (pure ? pure.n + " 纯物质 " + pure.bp + " ℃；" : "") + sol.detail;
+        box.classList.add("is-muted");
+        return;
+      }
+      box.value = (sol.kind === "estimate" ? "≈" : "") + sol.value;
+      box.title = (isFinite(w) ? "按 " + fmt(w, 2) + "% 计 · " : "") + (sol.detail || "");
+      box.classList.toggle("is-muted", sol.kind === "estimate");
+      return;
+    }
+
+    if (!pure) { box.value = "—"; box.title = "沸点表里没有「" + name + "」"; box.classList.remove("is-muted"); return; }
+    box.value = pure.bp === null ? pure.decomp + "（分解）" : pure.bp;
+    box.title = pure.n + " · 纯物质 " + (pure.bp === null ? pure.decomp + " ℃ 受热分解" : pure.bp + " ℃") + (pure.note ? " · " + pure.note : "");
+    box.classList.remove("is-muted");
+  }
+
   function computeConc() {
     var el = concEls();
     var mm = renderMolarMass(el);
+    renderBoiling(el);
     markAuto(el);
     renderDensityRef(el);
     if (!mm) {
@@ -321,11 +353,18 @@
   }
 
   /* ---------------- 方程式配平 ---------------- */
-  function runEquation() {
+  function runEquation(opts) {
+    var noComplete = !!(opts && opts.noComplete);
     var input = $("#eq-input");
     var out = $("#eq-result");
     var status = $("#eq-status");
     if (!input || !out) return;
+    if (noComplete) {
+      if (!/->/.test(String(input.value || ""))) return;
+    } else {
+      var done = eqComplete(input, status);
+      if (done === "pending" || done === "none") return;
+    }
 
     var res = Core.balance(input.value);
     if (!res.ok) {
@@ -374,6 +413,81 @@
       "<tbody>" + rows + "</tbody></table>";
   }
 
+  // 只写反应物（不必写等号）时，按常见反应表补全产物，再交给配平
+  function eqComplete(input, status) {
+    var raw = String(input.value || "")
+      .replace(/［＝]/g, "=")
+      .replace(/[－—–]/g, "-")
+      .replace(/-+>/g, "->")
+      .replace(/=>/g, "->")
+      .replace(/→/g, "->")
+      .trim();
+    if (!raw) return "skip";
+
+    var parts = raw.split(/->/);
+    var lhs = (parts[0] || "").trim();
+    var rhs = (parts[1] || "").trim();
+    if (rhs) return "skip";              // 已经写了产物，直接配平
+
+    // 反应物去掉前面的系数（2H2 -> H2），只用于查表
+    var terms = lhs.split(/[+＋,，、;；]/).map(function (s) {
+      return s.trim().replace(/^\d+(?=[A-Za-z(（])/, "");
+    }).filter(Boolean);
+    var reactants = rxParse(terms.join("+"));
+    if (!reactants.length) return "skip";
+
+    var inferred = false;
+    var hit = rxMatch(reactants);
+    var cand = hit.exact.length ? hit.exact.slice() : (reactants.length === 1 ? hit.partial.slice() : []);
+
+    // 表里没有：按性质规律推断（复分解看沉淀/气体/水、金属活动性、铵盐遇碱…）
+    if (!cand.length && window.RxRules) {
+      var inf = window.RxRules.infer(reactants);
+      if (inf.length) {
+        inferred = true;
+        cand = inf.map(function (x) {
+          return {
+            r: reactants.slice(),
+            cond: x.cond,
+            p: x.p,
+            note: "【规则推断】" + x.why,
+            inferred: true,
+            rule: x.rule
+          };
+        });
+      }
+    }
+
+    if (!cand.length) {
+      if (status) {
+        var near = rxNear(reactants);
+        status.className = "calc-status is-bad";
+        status.innerHTML = "常见反应表里没有这组组合。把产物写上也能直接配平，例如 <code>" + esc(lhs) + " -&gt; 产物</code>。"
+          + (near.length ? "<br><span class=\"rx-near-label\">表里相近的条目：</span>" + near.map(function (e) {
+              return '<button type="button" class="rx-near" data-eq="' + esc(e.r.join(" + ") + " -> " + e.p.join(" + ")) + '">'
+                + esc(e.r.join(" + ")) + " → " + esc(e.p.join(" + ")) + "</button>";
+            }).join("") : "");
+      }
+      return "none";
+    }
+
+    var lhsClean = terms.join(" + ");
+    if (cand.length === 1) {
+      input.value = lhsClean + " -> " + cand[0].p.join(" + ");
+      if (status) {
+        status.className = "calc-status";
+        status.textContent = "已补全产物（" + cand[0].cond + "）并配平";
+      }
+      return "filled";
+    }
+
+    rxPick(cand, status, function (entry) {
+      input.value = lhsClean + " -> " + entry.p.join(" + ");
+      runEquation();
+    });
+    return "pending";
+  }
+
   function initEq() {
     var input = $("#eq-input");
     var run = $("#eq-run");
@@ -383,14 +497,17 @@
     var timer = null;
     input.addEventListener("input", function () {
       clearTimeout(timer);
+      var v = String(input.value || "");
+      if (/[=＝]\s*$/.test(v)) { runEquation(); return; }   // 敲完等号立即补全
       timer = setTimeout(runEquation, 320);
     });
     input.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         runEquation();
       }
     });
+    input.addEventListener("blur", function () { if (input.value.trim()) runEquation(); });
 
     $$("[data-eq]").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -399,12 +516,267 @@
       });
     });
 
-    runEquation();
+    runEquation({ noComplete: true });
+  }
+
+  /* ---------------- 反应预测 ---------------- */
+  // 保留大小写的化学式归一化：处理下标、全角括号、空格；
+  // 全小写输入用元素表做贪心还原（hcl -> HCl）
+  function rxNorm(s) {
+    var t = String(s || "")
+      .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, function (ch) { return String("₀₁₂₃₄₅₆₇₈₉".indexOf(ch)); })
+      .replace(/\s+/g, "")
+      .replace(/[（）]/g, function (ch) { return ch === "（" ? "(" : ")"; })
+      .replace(/[.。]/g, "·");
+    if (!t) return "";
+    var letters = t.replace(/[^A-Za-z]/g, "");
+    if (letters && letters === letters.toLowerCase()) {
+      var AW = (Core.AW || {});
+      var out = "", i = 0;
+      while (i < t.length) {
+        var ch = t.charAt(i);
+        if (!/[A-Za-z]/.test(ch)) { out += ch; i++; continue; }
+        var two = ch.toUpperCase() + t.charAt(i + 1).toLowerCase();
+        if (/[A-Za-z]/.test(t.charAt(i + 1)) && AW[two]) { out += two; i += 2; continue; }
+        out += ch.toUpperCase();
+        i++;
+      }
+      t = out;
+    }
+    return t;
+  }
+
+  function rxParse(str) {
+    return String(str || "")
+      .split(/[+＋,，、;；]/)
+      .map(function (s) { return rxNorm(s).trim(); })
+      .filter(Boolean);
+  }
+
+  // 找不到完全匹配时，按“至少共享一个反应物”给出最多 3 条相近条目
+  function rxNear(list) {
+    var table = window.REACTIONS || [];
+    var out = [];
+    for (var i = 0; i < table.length; i++) {
+      var e = table[i];
+      var shared = e.r.some(function (f) { return list.indexOf(f) >= 0; });
+      if (shared) out.push(e);
+      if (out.length >= 3) break;
+    }
+    return out;
+  }
+
+  function rxMatch(list) {
+    var table = window.REACTIONS || [];
+    var want = list.slice().sort().join("|");
+    var exact = [], partial = [];
+    table.forEach(function (e) {
+      if (e.r.slice().sort().join("|") === want) exact.push(e);
+      else if (e.r.every(function (f) { return list.indexOf(f) >= 0; })) partial.push(e);
+    });
+    return { exact: exact, partial: partial };
+  }
+
+  function rxEqHTML(entry) {
+    var lhs = entry.r.join(" + ");
+    var rhs = entry.p.join(" + ");
+    var res = Core.balance(lhs + " -> " + rhs);
+    var line;
+    if (res && res.ok) {
+      var l = [], r = [];
+      for (var i = 0; i < res.species.length; i++) {
+        var piece = (res.coefs[i] > 1 ? '<b class="coef">' + res.coefs[i] + "</b>" : "") + subHTML(res.species[i]);
+        (i < res.lhsCount ? l : r).push(piece);
+      }
+      line = '<div class="eq-line">' + l.join(' <span class="plus">+</span> ') +
+        ' <span class="arrow">→</span> ' + r.join(' <span class="plus">+</span> ') + "</div>";
+    } else {
+      line = '<div class="eq-line rx-raw">' + subHTML(lhs) + ' <span class="arrow">→</span> ' + subHTML(rhs) +
+        (res ? ' <span class="rx-warn">配平失败：' + esc(res.error) + "</span>" : "") + "</div>";
+    }
+    return '<article class="rx-item">' +
+      '<div class="rx-head"><span class="rx-cond">' + esc(entry.cond) + "</span>" +
+      (entry.note ? '<span class="rx-note">' + esc(entry.note) + "</span>" : "") + "</div>" +
+      line +
+      '<div class="rx-foot">生成物：' + entry.p.map(function (f) { return subHTML(f); }).join("、") + "</div></article>";
+  }
+
+  function rxRender(entry, status) {
+    var out = $("#rx-result");
+    if (!out || !entry) return;
+    out.innerHTML = rxEqHTML(entry);
+    if (entry.inferred) out.setAttribute("data-inferred", "1");
+    else out.removeAttribute("data-inferred");
+    if (status) {
+      status.className = "calc-status is-ok";
+      status.textContent = "条件：" + entry.cond;
+    }
+  }
+
+  function rxEqText(entry) {
+    var res = Core.balance(entry.r.join(" + ") + " -> " + entry.p.join(" + "));
+    if (!res || !res.ok) return subHTML(entry.r.join(" + ")) + ' <span class="arrow">→</span> ' + subHTML(entry.p.join(" + "));
+    var l = [], r = [];
+    for (var i = 0; i < res.species.length; i++) {
+      var piece = (res.coefs[i] > 1 ? '<b class="coef">' + res.coefs[i] + "</b>" : "") + subHTML(res.species[i]);
+      (i < res.lhsCount ? l : r).push(piece);
+    }
+    return l.join(' <span class="plus">+</span> ') + ' <span class="arrow">→</span> ' + r.join(' <span class="plus">+</span> ');
+  }
+
+  function rxPick(list, status, onPick) {
+    var opened = document.querySelector("dialog.rx-dialog[open]");
+    if (opened) { opened.close("cancel"); }
+    var dlg = document.createElement("dialog");
+    dlg.className = "rx-dialog";
+    var rows = list.map(function (e, i) {
+      return '<label class="rx-opt">' +
+        '<input type="radio" name="rx-pick" value="' + i + '"' + (i === 0 ? " checked" : "") + ">" +
+        '<span class="rx-opt-body"><span class="rx-opt-eq">' + rxEqText(e) + "</span>" +
+        '<span class="rx-opt-cond">条件：' + esc(e.cond) + (e.note ? " · " + esc(e.note) : "") + "</span></span></label>";
+    }).join("");
+    dlg.innerHTML = '<form method="dialog" class="rx-dialog-inner">' +
+      "<h3>这组反应物有 " + list.length + " 种可能</h3>" +
+      '<p class="rx-dialog-hint">同样的反应物，条件不同产物会不一样。挑一条查看配平结果。</p>' +
+      '<div class="rx-opts">' + rows + "</div>" +
+      '<div class="rx-dialog-actions">' +
+      '<button value="ok" class="btn btn-accent">用这条</button>' +
+      '<button value="cancel" class="btn btn-ghost">取消</button></div></form>';
+    document.body.appendChild(dlg);
+    dlg.addEventListener("close", function () {
+      var checked = dlg.querySelector('input[name="rx-pick"]:checked');
+      var idx = dlg.returnValue === "ok" && checked ? Number(checked.value) : -1;
+      if (idx >= 0 && list[idx]) {
+        if (typeof onPick === "function") onPick(list[idx]);
+        else rxRender(list[idx], status);
+      }
+      else if (status) {
+        status.className = "calc-status";
+        status.textContent = "已取消，未选择产物";
+      }
+      dlg.remove();
+    });
+    dlg.showModal();
+  }
+
+  function rxRun(opts) {
+    var quiet = !!(opts && opts.quiet);
+    var input = $("#rx-input");
+    var out = $("#rx-result");
+    var status = $("#rx-status");
+    var condEl = $("#rx-cond");
+    if (!input || !out || !status) return;
+
+    var list = rxParse(input.value);
+    out.innerHTML = "";
+    if (!list.length) {
+      status.className = "calc-status is-bad";
+      status.textContent = "先写反应物，例如 Fe + O2";
+      return;
+    }
+
+    var m = rxMatch(list);
+    // 只有一个反应物时才允许退到“单物质分解”条目；
+    // 多个反应物必须整套命中，避免 A + B 被误判成 A 自己的反应
+    var cand = m.exact.length ? m.exact.slice() : (list.length === 1 ? m.partial.slice() : []);
+    var cond = condEl ? condEl.value : "";
+    if (cond) {
+      var narrowed = cand.filter(function (e) { return String(e.cond).indexOf(cond) >= 0; });
+      if (narrowed.length) cand = narrowed;
+    }
+
+    if (!cand.length) {
+      status.className = "calc-status is-bad";
+      status.textContent = "表里没有这条组合";
+      out.innerHTML = '<p class="rx-empty">「' + esc(list.join(" + ")) +
+        "」不在常见反应表里。可以换化学式写法，或到「方程式配平」里把产物也写全。</p>";
+      return;
+    }
+    if (cand.length === 1) {
+      rxRender(cand[0], status);
+      return;
+    }
+    status.className = "calc-status";
+    if (quiet) {
+      status.textContent = "有 " + cand.length + " 种条件/产物，点「生成方程式」选择";
+      return;
+    }
+    status.textContent = "有 " + cand.length + " 种条件/产物，请在弹窗中选择";
+    rxPick(cand, status);
+  }
+
+  function initReactions() {
+    var input = $("#rx-input");
+    var run = $("#rx-run");
+    if (!input || !run) return;
+
+    run.addEventListener("click", rxRun);
+    var timer = null;
+    input.addEventListener("input", function () {
+      clearTimeout(timer);
+      timer = setTimeout(rxRun, 320);
+    });
+    var cond = $("#rx-cond");
+    if (cond) cond.addEventListener("change", rxRun);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-rx]"), function (btn) {
+      btn.addEventListener("click", function () {
+        input.value = btn.getAttribute("data-rx");
+        rxRun();
+      });
+    });
+    rxRun({ quiet: true });
+  }
+
+  /* ---------------- 沸点参考 ---------------- */
+  function initBoiling() {
+    var box = $("#bp-table");
+    var search = $("#bp-search");
+    var count = $("#bp-count");
+    if (!box || !search) return;
+
+    var list = (Core.BOILING || []).slice().sort(function (a, b) {
+      var av = a.bp === null ? a.decomp : a.bp;
+      var bv = b.bp === null ? b.decomp : b.bp;
+      return av - bv;
+    });
+
+    function render() {
+      var q = String(search.value || "").trim().toLowerCase();
+      var hit = list.filter(function (s) {
+        if (!q) return true;
+        return s.n.toLowerCase().indexOf(q) >= 0 || s.f.toLowerCase().indexOf(q) >= 0;
+      });
+      if (count) count.textContent = hit.length + " / " + list.length + " 条";
+      if (!hit.length) {
+        box.innerHTML = '<p class="rx-empty">没有匹配的条目，换个关键词试试。</p>';
+        return;
+      }
+      box.innerHTML = '<table class="bp-table"><thead><tr><th>物质</th><th>化学式</th><th>温度 ℃</th><th>说明</th></tr></thead><tbody>' +
+        hit.map(function (s) {
+          var temp = s.bp === null ? '<span class="bp-decomp">' + s.decomp + "（分解）</span>" : s.bp;
+          return "<tr><td>" + esc(s.n) + '</td><td class="mono">' + subHTML(s.f) + "</td><td>" + temp +
+            "</td><td>" + esc(s.note || "") + "</td></tr>";
+        }).join("") + "</tbody></table>";
+    }
+
+    search.addEventListener("input", render);
+    render();
+  }
+
+  // 单个模块出错不该拖垮整页：逐个初始化并记录
+  window.__initErrs = [];
+  function safeInit(name, fn) {
+    try { fn(); } catch (e) {
+      window.__initErrs.push(name + ": " + (e && e.message ? e.message : String(e)));
+      if (window.console && console.error) console.error("[init:" + name + "]", e);
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    initTabs();
-    initConc();
-    initEq();
+    safeInit("tabs", initTabs);
+    safeInit("conc", initConc);
+    safeInit("eq", initEq);
+    safeInit("reactions", initReactions);
+    safeInit("boiling", initBoiling);
   });
 })();
