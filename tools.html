@@ -93,8 +93,8 @@
 
           <div class="calc-card">
             <h2>2 · 再填已知量</h2>
-            <p class="calc-hint">质量分数和浓度填一个，另一个自动算。常见溶质会按质量分数自动带出参考密度（也可以点下面的浓度点）；没有密度数据的溶质，密度栏会收起来，按 ρ≈1.00 估算。</p>
-            <div class="calc-row">
+            <p class="calc-hint">质量分数和浓度填一个，另一个自动算。常见溶质会按质量分数自动带出参考密度（也可以点下面的浓度点）；没有密度数据的溶质，密度栏会收起来，按 ρ≈1.00 估算；右边顺便给出该溶质的常压沸点。</p>
+            <div class="calc-row calc-row-4">
               <label class="calc-field">
                 <span>质量分数 w（%）</span>
                 <input id="conc-w" type="number" min="0.001" max="99.9" step="0.01" inputmode="decimal" aria-label="质量分数百分比">
@@ -106,6 +106,10 @@
               <label class="calc-field" id="conc-rho-field">
                 <span>密度 ρ（g/mL）</span>
                 <input id="conc-rho" type="number" min="0.05" max="5" step="0.001" value="1.00" inputmode="decimal" aria-label="溶液密度">
+              </label>
+              <label class="calc-field" id="conc-bp-field">
+                <span>沸点 bp（℃）</span>
+                <input id="conc-bp" type="text" readonly value="—" tabindex="-1" aria-label="常压沸点">
               </label>
             </div>
             <div class="dens-ref" id="conc-densref" aria-live="polite"></div>
@@ -131,20 +135,22 @@
             </div>
           </div>
         </div>
-      </div>
+      
+        
+</div>
 
       <!-- ---------- 方程式配平 ---------- -->
       <div class="calc-panel" id="panel-eq" role="tabpanel" aria-labelledby="tab-eq" hidden>
         <div class="calc-card calc-card-wide">
           <h2>输入方程式</h2>
           <p class="calc-hint">
-            用 <code>+</code> 连接物质，用 <code>-&gt;</code> 或 <code>=</code> 分开两边。
+            只写反应物、末尾加 <code>=</code> 就自动补全产物再配平；写全了就用 <code>-&gt;</code> 或 <code>=</code> 分开两边。
             例：<button type="button" class="mini" data-eq="KMnO4 + HCl -> KCl + MnCl2 + Cl2 + H2O">高锰酸钾与盐酸</button>
             <button type="button" class="mini" data-eq="C3H8 + O2 -> CO2 + H2O">丙烷燃烧</button>
             <button type="button" class="mini" data-eq="Fe + O2 -> Fe2O3">铁生锈</button>
             <button type="button" class="mini" data-eq="CuSO4·5H2O -> CuSO4 + H2O">胆矾脱水</button>
           </p>
-          <textarea id="eq-input" rows="2" spellcheck="false" aria-label="化学方程式">Fe + O2 -> Fe2O3</textarea>
+          <textarea id="eq-input" rows="2" spellcheck="false" aria-label="化学方程式">Fe + O2 =</textarea>
           <div class="calc-actions">
             <button type="button" class="btn btn-accent" id="eq-run">配平</button>
             <span class="calc-status" id="eq-status" aria-live="polite"></span>
@@ -152,9 +158,11 @@
 
           <div id="eq-result" aria-live="polite"></div>
         </div>
-      </div>
+      
+        
+</div>
 
-      <p class="calc-note">
+            <p class="calc-note">
         计算用的是标准原子量（IUPAC 常用值，几位有效数字），没有考虑活度系数、温度带来的体积变化和气体非理想性；
         配平结果只保证原子守恒，<b>不判断反应能否发生、条件与速率</b>。质量比是给配料估算用的近似整数比，别当成分析结果。
         所有跳转都只是站内资料关联，不代表这条反应被验证过。
@@ -194,6 +202,8 @@
 
 <script src="assets/data-index.js"></script>
 <script src="assets/chem-core.js"></script>
+  <script src="assets/reaction-rules.js"></script>
+<script src="assets/data-reactions.js"></script>
 <script src="assets/tools.js"></script>
 <script>
   (function () {
