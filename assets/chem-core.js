@@ -455,6 +455,124 @@
     return null;
   }
 
+  /* ---------------- 沸点参考（常压 101.325 kPa，单位 ℃） ---------------- */
+  var BOILING = [
+    { f: "H2O", n: "水", bp: 100, note: "标准沸点，定义 100 ℃ 的来源" },
+    { f: "H2O2", n: "过氧化氢", bp: 150.2, note: "受热易分解，蒸馏需减压" },
+    { f: "NH3", n: "氨", bp: -33.34, note: "极易液化，液氨可作溶剂" },
+    { f: "HCl", n: "氯化氢", bp: -85.05, note: "水溶液为盐酸；浓盐酸 110 ℃ 共沸" },
+    { f: "H2SO4", n: "硫酸", bp: 337, note: "浓硫酸受热先失水，338 ℃ 左右分解" },
+    { f: "HNO3", n: "硝酸", bp: 83, note: "68% 硝酸 120.5 ℃ 共沸" },
+    { f: "H3PO4", n: "磷酸", bp: 213, note: "受热脱水成焦磷酸" },
+    { f: "CH3COOH", n: "乙酸", bp: 118.1, note: "有刺激性酸味" },
+    { f: "C2H5OH", n: "乙醇", bp: 78.37, note: "95% 乙醇 78.15 ℃ 共沸" },
+    { f: "CH3OH", n: "甲醇", bp: 64.7, note: "有毒，不可饮用" },
+    { f: "CH3COCH3", n: "丙酮", bp: 56.05, note: "易挥发，常用洗剂" },
+    { f: "C6H6", n: "苯", bp: 80.1, note: "致癌，实验室多改用甲苯" },
+    { f: "C6H5CH3", n: "甲苯", bp: 110.6, note: "常用非极性溶剂" },
+    { f: "CHCl3", n: "三氯甲烷（氯仿）", bp: 61.2, note: "光气前体，需避光" },
+    { f: "CCl4", n: "四氯化碳", bp: 76.72, note: "曾作灭火剂，臭氧层损耗物" },
+    { f: "CH2Cl2", n: "二氯甲烷", bp: 39.6, note: "低沸点萃取剂" },
+    { f: "C6H12", n: "环己烷", bp: 80.7, note: "非极性，常用于重结晶" },
+    { f: "C6H14", n: "正己烷", bp: 68.7, note: "萃取与清洗" },
+    { f: "C2H5OC2H5", n: "乙醚", bp: 34.6, note: "极易挥发、易燃" },
+    { f: "C4H8O2", n: "乙酸乙酯", bp: 77.1, note: "果香，常用萃取剂" },
+    { f: "C3H6O2", n: "丙酸", bp: 141.1, note: "防腐剂原料" },
+    { f: "C6H5OH", n: "苯酚", bp: 181.7, note: "腐蚀性强，微溶于冷水" },
+    { f: "C6H5NH2", n: "苯胺", bp: 184.1, note: "有毒，易氧化变深" },
+    { f: "C6H5NO2", n: "硝基苯", bp: 210.9, note: "苦杏仁味，有毒" },
+    { f: "C3H8O3", n: "甘油", bp: 290, note: "受热分解，减压蒸馏" },
+    { f: "C2H6O2", n: "乙二醇", bp: 197.3, note: "防冻液主成分" },
+    { f: "CO2", n: "二氧化碳", bp: -78.5, note: "升华点，干冰温度" },
+    { f: "SO2", n: "二氧化硫", bp: -10, note: "刺激性气体，易液化" },
+    { f: "Cl2", n: "氯气", bp: -34.04, note: "黄绿色，钢瓶常为液氯" },
+    { f: "Br2", n: "溴", bp: 58.8, note: "红棕色液体，易挥发" },
+    { f: "I2", n: "碘", bp: 184.3, note: "易升华，紫色蒸气" },
+    { f: "Hg", n: "汞", bp: 356.7, note: "常温唯一液态金属" },
+    { f: "S", n: "硫", bp: 444.6, note: "先熔化成黄色液体" },
+    { f: "Na", n: "钠", bp: 883, note: "常存煤油中" },
+    { f: "K", n: "钾", bp: 759, note: "比钠更活泼" },
+    { f: "Mg", n: "镁", bp: 1090, note: "燃烧时温度极高" },
+    { f: "Al", n: "铝", bp: 2467, note: "电解铝需冰晶石助熔" },
+    { f: "Fe", n: "铁", bp: 2861, note: "高炉出铁约 1500 ℃" },
+    { f: "Cu", n: "铜", bp: 2562, note: "导电导热优良" },
+    { f: "Zn", n: "锌", bp: 907, note: "镀锌防腐" },
+    { f: "Ag", n: "银", bp: 2162, note: "导电性最好" },
+    { f: "Au", n: "金", bp: 2856, note: "化学性质稳定" },
+    { f: "Pb", n: "铅", bp: 1749, note: "有毒重金属" },
+    { f: "N2", n: "氮气", bp: -195.8, note: "液氮常用冷媒" },
+    { f: "O2", n: "氧气", bp: -183, note: "液氧淡蓝色" },
+    { f: "Ar", n: "氩", bp: -185.9, note: "焊接保护气" },
+    { f: "He", n: "氦", bp: -268.9, note: "沸点最低的元素" },
+    { f: "H2", n: "氢气", bp: -252.9, note: "液氢作火箭燃料" },
+    { f: "C10H8", n: "萘", bp: 218, note: "易升华" },
+    { f: "C6H5COOH", n: "苯甲酸", bp: 249.2, note: "食品防腐剂" },
+    { f: "Na2CO3", n: "碳酸钠", bp: null, decomp: 851, note: "高温分解" },
+    { f: "CaCO3", n: "碳酸钙", bp: null, decomp: 825, note: "煅烧分解" },
+    { f: "KMnO4", n: "高锰酸钾", bp: null, decomp: 240, note: "受热分解" },
+    { f: "CuSO4·5H2O", n: "胆矾", bp: null, decomp: 250, note: "先失去结晶水" }
+  ];
+
+  // ---- 溶液沸点：随浓度变化 ----
+  // 1) 少数有实测点的物质查表并线性插值；2) 其余按沸点升高公式估算（Kb=0.512）；
+  // 3) 易挥发溶质（乙醇/氨水等）沸点会随浓度下降，这里不给数，只提示。
+  var KB_WATER = 0.512;
+  var SOLUTION_BP = {
+    H2SO4: [[10, 102.6], [20, 105.4], [30, 108.5], [40, 114.0], [50, 123.5], [60, 141.0], [70, 166.0], [80, 199.0], [90, 263.0], [98, 338.0]],
+    NaOH: [[10, 105.2], [20, 109.7], [30, 115.3], [40, 124.0], [50, 142.0]],
+    NaCl: [[10, 101.8], [20, 105.3], [26, 108.7]],
+    HCl: [[10, 103.0], [20, 108.6], [30, 114.2]],
+    HNO3: [[10, 102.0], [20, 103.5], [30, 106.0], [50, 116.0], [68, 120.5]],
+    Na2CO3: [[10, 102.0], [20, 105.0]],
+    KCl: [[10, 101.6], [20, 104.6]]
+  };
+  var VOLATILE_WITH_WATER = { NH3: 1, C2H5OH: 1, C2H6O: 1, CH3OH: 1, CH3COOH: 1, CH3COCH3: 1, C3H6O: 1, C6H6: 1, HCHO: 1 };
+  var IONS_PER_MOL = { NaCl: 2, KCl: 2, NaOH: 2, KOH: 2, HCl: 2, HNO3: 2, H2SO4: 2.5, Na2CO3: 3, CaCl2: 3, CuSO4: 2 };
+
+  function solutionBp(formula, wPercent) {
+    if (!formula) return null;
+    var want = String(formula).replace(/\s+/g, "");
+    var w = Number(wPercent);
+    if (!isFinite(w) || w <= 0 || w >= 100) return null;
+    var pure = boilingOf(want);
+    if (VOLATILE_WITH_WATER[want]) {
+      return { kind: "volatile", value: pure && pure.bp !== null ? pure.bp : null, pure: pure, detail: "易挥发溶质，水溶液沸点会低于纯水" };
+    }
+    var pts = SOLUTION_BP[want];
+    if (pts) {
+      var x = Math.min(Math.max(w, pts[0][0]), pts[pts.length - 1][0]);
+      for (var i = 0; i < pts.length - 1; i++) {
+        var a = pts[i], b = pts[i + 1];
+        if (x >= a[0] && x <= b[0]) {
+          var t = (x - a[0]) / (b[0] - a[0] || 1);
+          var v = a[1] + t * (b[1] - a[1]);
+          return { kind: "table", value: Math.round(v * 10) / 10, pure: pure, detail: "查表：约 " + w + "% 水溶液" };
+        }
+      }
+      return { kind: "table", value: pts[pts.length - 1][1], pure: pure, detail: "查表：接近饱和" };
+    }
+    var M = null;
+    try {
+      var mm = molarMass(want);
+      M = mm && typeof mm === "object" ? (mm.ok === false ? null : mm.mass) : mm;
+    } catch (e) { M = null; }
+    if (!M || !isFinite(M) || M <= 0) return null;
+    var molality = (1000 * w) / (M * (100 - w));
+    var i2 = IONS_PER_MOL[want] || 1;
+    var dT = KB_WATER * i2 * molality;
+    if (dT > 40) dT = 40;
+    return { kind: "estimate", value: Math.round((100 + dT) * 10) / 10, pure: pure, detail: "估算：按沸点升高 " + (i2 > 1 ? "（近似完全电离）" : "") };
+  }
+
+  function boilingOf(formula) {
+    if (!formula) return null;
+    var want = String(formula).replace(/\s+/g, "").replace(/[₀-₉]/g, function (ch) { return String("₀₁₂₃₄₅₆₇₈₉".indexOf(ch)); });
+    for (var i = 0; i < BOILING.length; i++) {
+      if (BOILING[i].f.replace(/\s+/g, "") === want) return BOILING[i];
+    }
+    return null;
+  }
+
   var API = {
     AW: AW,
     parseFormula: parseFormula,
@@ -467,7 +585,10 @@
     dissolveToMolar: dissolveToMolar,
     densityRef: densityRef,
     densityAt: densityAt,
-    DENSITY_REF: DENSITY_REF
+    DENSITY_REF: DENSITY_REF,
+    BOILING: BOILING,
+    boilingOf: boilingOf,
+    solutionBp: solutionBp
   };
 
   root.ChemCore = API;

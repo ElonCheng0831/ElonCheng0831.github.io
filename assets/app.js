@@ -209,7 +209,33 @@
     });
   }
 
-  function initTheme() {
+    /* 悬停即预取：鼠标移到导航/卡片链接上时提前把目标页 HTML 拉进浏览器缓存，
+     配合 Cache-Control max-age=600，站内跳转基本秒开。 */
+  function initPrefetch() {
+    var done = {};
+    function prefetch(url) {
+      try {
+        var clean = String(url || "").split("#")[0];
+        if (!clean || done[clean]) return;
+        if (clean === location.pathname.split("/").pop()) return;
+        done[clean] = 1;
+        var link = document.createElement("link");
+        link.rel = "prefetch";
+        link.href = clean;
+        link.as = "document";
+        document.head.appendChild(link);
+      } catch (e) { /* 预取失败不影响主流程 */ }
+    }
+    var nodes = document.querySelectorAll('a[href$=".html"], a[href*=".html#"], a[href^="/"], a[href^="./"]');
+    Array.prototype.forEach.call(nodes, function (a) {
+      var warm = function () { prefetch(a.getAttribute("href")); };
+      a.addEventListener("mouseenter", warm, { passive: true });
+      a.addEventListener("touchstart", warm, { passive: true });
+      a.addEventListener("focus", warm, { passive: true });
+    });
+  }
+
+function initTheme() {
     if (factoryMode || chainMode) return; // 工厂页与链路页固定主题，不提供明暗切换
     var stored = null;
     try { stored = localStorage.getItem("chemlab-theme"); } catch (e) { /* 隐私模式 */ }
@@ -250,6 +276,33 @@
         });
       });
     }
+  }
+
+  /* ---------------- 阅读进度条 ---------------- */
+  function initScrollProgress() {
+    if (document.querySelector(".scroll-progress")) return;
+    var bar = document.createElement("div");
+    bar.className = "scroll-progress";
+    bar.setAttribute("aria-hidden", "true");
+    document.body.appendChild(bar);
+
+    var doc = document.documentElement;
+    var ticking = false;
+
+    function paint() {
+      ticking = false;
+      var max = doc.scrollHeight - window.innerHeight;
+      var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      bar.style.transform = "scaleX(" + p.toFixed(4) + ")";
+    }
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(paint);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    paint();
   }
 
   /* ---------------- 入场动画 ---------------- */
@@ -926,6 +979,8 @@
   function init() {
     initTheme();
     initNav();
+    initPrefetch();
+    initScrollProgress();
     initElementStrip();
     initFeatured();
     initListPage({
