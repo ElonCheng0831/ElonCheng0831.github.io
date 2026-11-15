@@ -236,7 +236,7 @@
   }
 
 function initTheme() {
-    if (factoryMode || chainMode) return; // 工厂页与链路页固定主题，不提供明暗切换
+    if (factoryMode) return; // 工厂页固定深色，不提供切换（链路页支持明暗）
     var stored = null;
     try { stored = localStorage.getItem("chemlab-theme"); } catch (e) { /* 隐私模式 */ }
     var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;

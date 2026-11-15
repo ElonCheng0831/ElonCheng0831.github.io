@@ -1055,3 +1055,573 @@
 @media (max-width: 900px) {
   .zoom-tools .chain-fs { height: 38px !important; }
 }
+
+/* 修正：窄屏顶部检索条横向溢出（面包屑 + 搜索 + 返回挤在一行） */
+@media (max-width: 900px) {
+  .chain-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 10px;
+    margin: 10px 10px 0;
+    min-width: 0;
+  }
+  .chain-folder { order: 0; }
+  .chain-crumb {
+    order: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .chain-crumb a,
+  .chain-crumb b {
+    min-width: 0;
+    max-width: 46%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .chain-back { order: 2; flex: none; }
+  .chain-search {
+    order: 3;
+    flex: 1 1 100%;
+    width: 100% !important;
+    min-width: 0;
+  }
+  .chain-search input { min-width: 0; width: 100%; }
+}
+.chain-app, .chain-bar { max-width: 100%; }
+
+/* =================================================================
+   链路页夜览 v5 —— 有层次的暗色：暖黑底、分层表面、低饱和强调色
+   ================================================================= */
+
+/* =================================================================
+   链路页暗色 v10
+   规范：单一深底 / 表面靠亮度差与 1px 描边 / 强调色只给交互
+   注意：一个可视块只加一层描边，避免「框套框」
+   ================================================================= */
+html[data-theme="dark"] body.chain-page {
+  --bg: #0c110f;
+  --surface: #141a18;
+  --surface-2: #1a2220;
+  --line: #26302c;
+  --line-2: #35423d;
+  --ink: #edf4f1;
+  --ink-2: #b8c7c1;
+  --ink-3: #8b9a94;
+  --accent: #35c3a4;
+  --accent-soft: rgba(53, 195, 164, .15);
+  background: var(--bg);
+  color: var(--ink-2);
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] .chain-bar { background: #10161400; background-color: #101614; border-color: var(--line); }
+html[data-theme="dark"] .chain-bar .chain-search { background: #0a0f0e; border-color: var(--line-2); color: var(--ink); }
+
+/* 画布 */
+html[data-theme="dark"] .chain-viewport {
+  background-color: #101715 !important;
+  background-image: radial-gradient(circle at 1px 1px, rgba(150, 190, 176, .10) 1px, transparent 1.1px) !important;
+  box-shadow: inset 0 0 0 1px var(--line) !important;
+}
+html[data-theme="dark"] .chain-stage,
+html[data-theme="dark"] .chain-canvas { background: transparent !important; border-color: var(--line) !important; }
+
+/* —— 原料方块：一个方块 + 一行名字，不加第二层框 —— */
+html[data-theme="dark"] #chain-viewport .chain-node.is-raw,
+html[data-theme="dark"] #chain-viewport .chain-node[data-role="raw"] {
+  border: 0 !important;
+  background: transparent !important;
+}
+html[data-theme="dark"] #chain-viewport .tile-frame {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line-2) !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] #chain-viewport .tile-frame svg { color: #b9d2ca !important; }
+html[data-theme="dark"] #chain-viewport .tile-name {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--ink-2) !important;
+  font-size: 11.5px;
+}
+html[data-theme="dark"] #chain-viewport .tile-name span,
+html[data-theme="dark"] #chain-viewport .tile-name b { color: var(--ink-2) !important; background: transparent !important; }
+
+/* —— 步骤节点：外层一个框，内部不再画框 —— */
+html[data-theme="dark"] #chain-viewport .chain-node.is-step,
+html[data-theme="dark"] #chain-viewport .chain-node:not(.is-raw) {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 10px;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] #chain-viewport .machine-body {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] #chain-viewport .machine-body small {
+  color: var(--ink-3) !important;
+  opacity: 1 !important;
+  letter-spacing: .08em;
+}
+html[data-theme="dark"] #chain-viewport .machine-body b { color: var(--ink) !important; }
+html[data-theme="dark"] #chain-viewport .machine-mark {
+  color: var(--accent) !important;
+  opacity: 1 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+html[data-theme="dark"] .chain-edges path,
+html[data-theme="dark"] .chain-edges line { stroke: #3d4d48 !important; }
+
+/* 分类条 */
+html[data-theme="dark"] .chain-cats-row,
+html[data-theme="dark"] .chain-cats { background: transparent !important; }
+html[data-theme="dark"] .chain-cats .chip,
+html[data-theme="dark"] .salt-toggle {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .chain-cats .chip[aria-pressed="true"] {
+  background: var(--accent-soft) !important;
+  border-color: var(--accent) !important;
+  color: #9decd8 !important;
+}
+html[data-theme="dark"] .chain-cats .chip-n { color: var(--ink-3) !important; }
+
+/* 状态条 / 缩放条 */
+html[data-theme="dark"] .chain-hud { background: transparent !important; border-color: var(--line) !important; }
+html[data-theme="dark"] .chain-zoom {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+}
+html[data-theme="dark"] .chain-hud,
+html[data-theme="dark"] .chain-hud span,
+html[data-theme="dark"] .chain-hud small { color: var(--ink-3) !important; }
+html[data-theme="dark"] .chain-zoom output,
+html[data-theme="dark"] .chain-zoom b { color: var(--ink-2) !important; }
+html[data-theme="dark"] .chain-zoom input[type="range"] { accent-color: var(--accent); }
+html[data-theme="dark"] .chain-uid { color: var(--ink-3) !important; }
+
+/* 抽屉 */
+html[data-theme="dark"] .chain-drawer,
+html[data-theme="dark"] .drawer-head { background: #111715; border-color: var(--line); }
+html[data-theme="dark"] .drawer-item,
+html[data-theme="dark"] .drawer-more,
+html[data-theme="dark"] .drawer-empty,
+html[data-theme="dark"] .suggest-item {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+}
+html[data-theme="dark"] .drawer-item *,
+html[data-theme="dark"] .drawer-more *,
+html[data-theme="dark"] .drawer-empty *,
+html[data-theme="dark"] .suggest-item *,
+html[data-theme="dark"] .drawer-head * { color: var(--ink-2) !important; }
+html[data-theme="dark"] .drawer-item:hover { background: var(--surface-2) !important; }
+html[data-theme="dark"] .drawer-item.is-active { background: var(--accent-soft) !important; border-color: var(--accent) !important; }
+html[data-theme="dark"] .chain-scrim { background: rgba(0, 0, 0, .55); }
+
+/* 详情区 */
+html[data-theme="dark"] .chain-info { background: transparent !important; }
+html[data-theme="dark"] .chain-info h1,
+html[data-theme="dark"] .chain-info h2,
+html[data-theme="dark"] .chain-info h3 {
+  color: var(--ink) !important;
+  -webkit-text-fill-color: var(--ink) !important;
+  background: none !important;
+}
+html[data-theme="dark"] .chain-info p,
+html[data-theme="dark"] .chain-info li,
+html[data-theme="dark"] .chain-info dd,
+html[data-theme="dark"] .chain-info strong { color: var(--ink-2) !important; }
+html[data-theme="dark"] .chain-info a { color: var(--accent) !important; }
+html[data-theme="dark"] .meta-pill,
+html[data-theme="dark"] .meta-btn,
+html[data-theme="dark"] .role-chip {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .chain-steps li,
+html[data-theme="dark"] .chain-steps > div {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+}
+html[data-theme="dark"] .chain-steps li *,
+html[data-theme="dark"] .chain-steps > div * { color: var(--ink-2) !important; }
+html[data-theme="dark"] .chain-steps .step-n { color: var(--ink-3) !important; background: transparent !important; }
+
+/* 盐类检索表 */
+html[data-theme="dark"] .salt-table { background: transparent !important; border-color: var(--line) !important; }
+html[data-theme="dark"] .salt-table th,
+html[data-theme="dark"] .salt-table td { border-color: var(--line) !important; color: var(--ink-2) !important; }
+html[data-theme="dark"] .salt-cell,
+html[data-theme="dark"] .salt-result,
+html[data-theme="dark"] .salt-none {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .salt-cell:hover { background: var(--surface-2) !important; }
+html[data-theme="dark"] .salt-cell.is-active { background: var(--accent-soft) !important; box-shadow: inset 0 0 0 1px var(--accent); }
+
+/* 画布内文字可读性：名称与 STEP 标签提亮、字号微调 */
+html[data-theme="dark"] #chain-viewport .tile-name {
+  color: #d3e6df !important;
+  font-size: 12px !important;
+  font-weight: 500;
+}
+html[data-theme="dark"] #chain-viewport .tile-name * { color: #d3e6df !important; }
+html[data-theme="dark"] #chain-viewport .machine-body small {
+  color: #a7bcb4 !important;
+  font-size: 10px !important;
+}
+html[data-theme="dark"] #chain-viewport .machine-body b {
+  color: #ffffff !important;
+  font-size: 13px !important;
+}
+html[data-theme="dark"] #chain-viewport .machine-mark { color: #4fd8b8 !important; }
+
+/* 详情头部：去掉小标签外框，字级拉开层次 */
+html[data-theme="dark"] .chain-info-head .meta-pill,
+html[data-theme="dark"] .chain-info .meta-pill,
+html[data-theme="dark"] .chain-info .role-chip,
+html[data-theme="dark"] .chain-info .alt-pill {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  color: var(--ink-3) !important;
+}
+html[data-theme="dark"] .chain-info-head .meta-pill b,
+html[data-theme="dark"] .chain-info .role-chip b { color: var(--ink-2) !important; }
+
+html[data-theme="dark"] .chain-info-head .chain-kicker,
+html[data-theme="dark"] .chain-info .chain-kicker,
+html[data-theme="dark"] .chain-info-head small {
+  font-size: 11px !important;
+  letter-spacing: .18em !important;
+  color: var(--ink-3) !important;
+}
+html[data-theme="dark"] .chain-info h1 {
+  font-size: 32px !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.4px !important;
+}
+html[data-theme="dark"] .chain-info p {
+  font-size: 14.5px !important;
+  line-height: 1.85 !important;
+  color: var(--ink-2) !important;
+}
+
+/* 详情头部文字层级再拉开一档 */
+html[data-theme="dark"] .chain-info-head .meta-pill,
+html[data-theme="dark"] .chain-info .role-chip { font-size: 13px !important; }
+html[data-theme="dark"] .chain-info-head .meta-pill > span:first-child,
+html[data-theme="dark"] .chain-info .role-chip > span:first-child {
+  font-size: 11px !important;
+  letter-spacing: .12em !important;
+  color: var(--ink-3) !important;
+}
+html[data-theme="dark"] .chain-info p { font-size: 15px !important; }
+html[data-theme="dark"] .chain-info h1 { font-size: 34px !important; }
+
+/* 原料块：外层 .chain-tile 不要框，只保留里面那个图标方块 */
+html[data-theme="dark"] #chain-viewport .chain-tile {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] #chain-viewport .chain-tile .tile-frame.is-plain { }
+
+/* 原料块：只留一层框（诊断后统一） */
+html[data-theme="dark"] #chain-viewport .tile-frame.is-plain {
+  background: transparent !important;
+  border: 0 !important;
+}
+html[data-theme="dark"] #chain-viewport .chain-tile.is-reagent {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 10px;
+  padding: 10px 8px 6px;
+}
+
+/* 回退：原料块外层不加框、不加内边距；框只画在图标方块上 */
+html[data-theme="dark"] #chain-viewport .chain-tile,
+html[data-theme="dark"] #chain-viewport .chain-tile.is-reagent {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] #chain-viewport .chain-tile .tile-frame {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+}
+html[data-theme="dark"] #chain-viewport .chain-tile .tile-name {
+  margin-top: 6px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* 把详情头部小标签的框加回来（深色版描边芯片） */
+html[data-theme="dark"] .chain-info-head .meta-pill,
+html[data-theme="dark"] .chain-info .meta-pill,
+html[data-theme="dark"] .chain-info .role-chip,
+html[data-theme="dark"] .chain-info .alt-pill {
+  background: var(--surface) !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  box-shadow: none !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .chain-info-head .meta-pill > span:first-child,
+html[data-theme="dark"] .chain-info .role-chip > span:first-child {
+  color: var(--ink-3) !important;
+  font-size: 11px !important;
+  letter-spacing: .1em !important;
+}
+html[data-theme="dark"] .chain-info-head .meta-pill b,
+html[data-theme="dark"] .chain-info .role-chip b { color: var(--ink) !important; font-size: 13px !important; }
+
+/* 抽屉列表：图标框、风险标签、计数徽标、字色 */
+html[data-theme="dark"] .di-art {
+  background: transparent !important;
+  border: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 44px;
+  height: 44px;
+}
+html[data-theme="dark"] .di-art svg { color: #bcd4cc !important; width: 34px; height: 34px; }
+html[data-theme="dark"] .di-body b { color: #ffffff !important; font-size: 14px; }
+html[data-theme="dark"] .di-body small { color: #9db3ab !important; font-size: 12px; }
+html[data-theme="dark"] .di-count {
+  background: rgba(53, 195, 164, .12) !important;
+  border: 1px solid rgba(53, 195, 164, .45) !important;
+  color: #8ce8d2 !important;
+  font-size: 12px;
+}
+html[data-theme="dark"] .di-risk {
+  background: #1b2421 !important;
+  border: 1px solid #3a4a44 !important;
+  color: #dbe8e3 !important;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+html[data-theme="dark"] .di-risk.hz-1 { border-color: #3f7f6a !important; color: #8ee0c6 !important; }
+html[data-theme="dark"] .di-risk.hz-2 { background: #241d10 !important; border-color: #8a6a2f !important; color: #f0c46a !important; }
+html[data-theme="dark"] .di-risk.hz-3 { background: #241314 !important; border-color: #8b3a3a !important; color: #ff9a9a !important; }
+
+/* 画布方块内的图标居中 */
+html[data-theme="dark"] #chain-viewport .tile-frame svg {
+  width: 34px !important;
+  height: 34px !important;
+  display: block;
+  margin: 0 auto;
+}
+
+/* 画布方块：图标与名称水平居中 */
+html[data-theme="dark"] #chain-viewport .chain-tile {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+html[data-theme="dark"] #chain-viewport .chain-tile .tile-name { text-align: center !important; }
+/* 步骤节点文字提亮 */
+html[data-theme="dark"] #chain-viewport .machine-body b { color: #ffffff !important; opacity: 1 !important; }
+html[data-theme="dark"] #chain-viewport .machine-body { opacity: 1 !important; }
+html[data-theme="dark"] #chain-viewport .machine-body small { color: #b3c8c0 !important; opacity: 1 !important; }
+
+/* 方块宽度自适应，名称不被裁、图标居中 */
+html[data-theme="dark"] #chain-viewport .chain-tile {
+  width: max-content !important;
+  min-width: 56px;
+}
+html[data-theme="dark"] #chain-viewport .chain-tile .tile-name {
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* 原料块容器给足宽度：图标居中、名称不越界 */
+html[data-theme="dark"] #chain-viewport .chain-tile {
+  width: 88px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+html[data-theme="dark"] #chain-viewport .chain-tile .tile-name {
+  width: 88px !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* —— 抽屉：分裂卡、方法行、收起/关闭按钮 —— */
+html[data-theme="dark"] .di-split,
+html[data-theme="dark"] .di-split-head,
+html[data-theme="dark"] .di-split-body {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+html[data-theme="dark"] .di-split-head b,
+html[data-theme="dark"] .di-split-head * { color: var(--ink) !important; }
+html[data-theme="dark"] .di-split-head small { color: var(--ink-3) !important; }
+html[data-theme="dark"] .di-collapse {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line-2) !important;
+  color: var(--ink) !important;
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+html[data-theme="dark"] .di-method {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .di-method * { color: var(--ink-2) !important; }
+html[data-theme="dark"] .di-method b { color: #ffffff !important; font-size: 13.5px; }
+html[data-theme="dark"] .di-method small { color: var(--ink-3) !important; }
+html[data-theme="dark"] .di-method .dm-no {
+  background: var(--surface) !important;
+  border: 1px solid var(--line-2) !important;
+  color: var(--accent) !important;
+  border-radius: 6px;
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+html[data-theme="dark"] .di-method .dm-go { color: var(--accent) !important; }
+html[data-theme="dark"] .di-method.is-active { border-color: var(--accent) !important; }
+html[data-theme="dark"] .drawer-close {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line-2) !important;
+  color: var(--ink) !important;
+}
+
+/* —— 盐类交叉表 —— */
+html[data-theme="dark"] .salt-table { background: transparent !important; }
+html[data-theme="dark"] .salt-table th {
+  background: #111a17 !important;
+  color: var(--ink-2) !important;
+  border-color: var(--line) !important;
+}
+html[data-theme="dark"] .salt-table td,
+html[data-theme="dark"] .salt-corner { background: var(--surface) !important; border-color: var(--line) !important; color: var(--ink-2) !important; }
+html[data-theme="dark"] .salt-table td * { color: var(--ink-2) !important; }
+html[data-theme="dark"] .salt-chip { background: rgba(53,195,164,.12) !important; color: #9decd8 !important; border-radius: 4px; }
+html[data-theme="dark"] .salt-kicker,
+html[data-theme="dark"] .salt-result-head { color: var(--ink-3) !important; background: transparent !important; }
+html[data-theme="dark"] .salt-choice { background: var(--surface-2) !important; border-color: var(--line) !important; color: var(--ink) !important; }
+html[data-theme="dark"] .salt-choice * { color: var(--ink) !important; }
+
+/* =================================================================
+   兜底：抽屉与盐表里所有残留的浅色面板统一压成深色
+   顺序很关键——先「全部清成深底浅字」，再把需要卡片感的几个还回去
+   ================================================================= */
+html[data-theme="dark"] .chain-drawer,
+html[data-theme="dark"] .chain-drawer * {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-color: var(--line) !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .chain-drawer b,
+html[data-theme="dark"] .chain-drawer strong { color: #ffffff !important; }
+html[data-theme="dark"] .chain-drawer small,
+html[data-theme="dark"] .chain-drawer .di-body small { color: var(--ink-3) !important; }
+html[data-theme="dark"] .chain-drawer .drawer-item,
+html[data-theme="dark"] .chain-drawer .di-split,
+html[data-theme="dark"] .chain-drawer .di-method {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px;
+}
+html[data-theme="dark"] .chain-drawer .di-method { background-color: var(--surface-2) !important; }
+html[data-theme="dark"] .chain-drawer .drawer-close,
+html[data-theme="dark"] .chain-drawer .di-collapse {
+  background-color: var(--surface-2) !important;
+  border: 1px solid var(--line-2) !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .salt-panel,
+html[data-theme="dark"] .salt-panel *,
+html[data-theme="dark"] .salt-table,
+html[data-theme="dark"] .salt-table * {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-color: var(--line) !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .salt-table th { background-color: #111a17 !important; color: #d6e6e0 !important; }
+html[data-theme="dark"] .salt-cell,
+html[data-theme="dark"] .salt-choice { background-color: var(--surface) !important; }
+html[data-theme="dark"] .salt-cell:hover { background-color: var(--surface-2) !important; }
+
+/* =================================================================
+   药品图鉴抽屉：面板给实色，选项比面板再亮一档，形成清晰对比
+   （覆盖前面「全部压透明」的兜底，顺序在后所以优先）
+   ================================================================= */
+html[data-theme="dark"] .chain-drawer {
+  background-color: #0f1715 !important;
+  border-right: 1px solid var(--line-2) !important;
+  box-shadow: 24px 0 60px rgba(0, 0, 0, .55) !important;
+}
+html[data-theme="dark"] .chain-drawer .drawer-head {
+  background-color: #0b1210 !important;
+  border-bottom: 1px solid var(--line-2) !important;
+}
+html[data-theme="dark"] .chain-drawer .drawer-item,
+html[data-theme="dark"] .chain-drawer .di-split {
+  background-color: #18211e !important;
+  border: 1px solid #2b3833 !important;
+}
+html[data-theme="dark"] .chain-drawer .drawer-item:hover,
+html[data-theme="dark"] .chain-drawer .di-method:hover {
+  background-color: #1f2a26 !important;
+  border-color: var(--line-2) !important;
+}
+html[data-theme="dark"] .chain-drawer .di-method {
+  background-color: #131c19 !important;
+  border: 1px solid #26332e !important;
+}
+html[data-theme="dark"] .chain-drawer .drawer-item.is-active {
+  background-color: var(--accent-soft) !important;
+  border-color: var(--accent) !important;
+}
+/* 抽屉里的筛选胶囊：底比面板亮、选中用青色 */
+html[data-theme="dark"] .chain-drawer .chip,
+html[data-theme="dark"] .chain-drawer .risk-filter {
+  background-color: #1b2522 !important;
+  border: 1px solid #35423d !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .chain-drawer .chip[aria-pressed="true"],
+html[data-theme="dark"] .chain-drawer .risk-filter[aria-pressed="true"] {
+  background-color: var(--accent-soft) !important;
+  border-color: var(--accent) !important;
+  color: #9decd8 !important;
+}
