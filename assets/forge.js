@@ -1945,3 +1945,44 @@
     expandReagents: findProducers
   };
 })();
+
+/* ---------- 画布全屏（合成工坊 .forge-stage） ---------- */
+(function () {
+  function mount() {
+    var stage = document.querySelector(".forge-stage");
+    var tools = document.querySelector(".zoom-tools");
+    if (!stage || !tools || !stage.requestFullscreen) return false;
+    if (document.getElementById("chain-fs")) return true;
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "chain-fs";
+    btn.className = "chain-fs";
+    btn.title = "全屏查看配方树";
+    btn.setAttribute("aria-label", "全屏查看配方树");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>全屏</span>';
+    btn.addEventListener("click", function () {
+      if (document.fullscreenElement) { document.exitFullscreen(); return; }
+      if (stage.requestFullscreen) {
+        stage.requestFullscreen().catch(function () {});
+      }
+    });
+    document.addEventListener("fullscreenchange", function () {
+      var on = document.fullscreenElement === stage;
+      btn.classList.toggle("is-on", on);
+      var label = btn.querySelector("span");
+      if (label) label.textContent = on ? "退出" : "全屏";
+      if (on) setTimeout(function () { window.dispatchEvent(new Event("resize")); }, 120);
+    });
+    tools.appendChild(btn);
+    return true;
+  }
+  function boot() {
+    if (mount()) return;
+    var tries = 0;
+    var t = setInterval(function () {
+      if (mount() || ++tries > 20) clearInterval(t);
+    }, 150);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();

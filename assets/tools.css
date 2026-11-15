@@ -605,3 +605,80 @@ html[data-theme="dark"] .btn-accent { color: #04231f; }
   letter-spacing: 0.04em;
   color: var(--muted);
 }
+
+/* ================= 试剂物质库 ================= */
+.lib-list { margin: 6px 0 10px; }
+.lib-head, .lib-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 90px 92px;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 2px;
+}
+.lib-head {
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.lib-row { border-bottom: 1px solid var(--line); }
+.lib-row:hover { background: var(--surface-2); }
+.lib-name b { font-weight: 600; font-size: 14.5px; }
+.lib-name span { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
+.lib-formula { font-family: var(--mono); font-size: 13.5px; }
+.lib-mass { font-family: var(--mono); font-size: 13px; color: var(--ink-2); text-align: right; }
+.lib-row .lib-use { justify-self: end; }
+
+@media (max-width: 640px) {
+  .lib-head { display: none; }
+  .lib-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "name use" "f mass";
+    row-gap: 3px;
+    padding: 11px 2px;
+  }
+  .lib-name { grid-area: name; }
+  .lib-formula { grid-area: f; font-size: 12.5px; color: var(--ink-2); }
+  .lib-mass { grid-area: mass; font-size: 12px; }
+  .lib-row .lib-use { grid-area: use; }
+}
+/* ---------- 滴定计算 ---------- */
+.tit-ratio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  color: var(--muted);
+}
+.tit-ratio input { width: 64px; text-align: center; }
+.calc-out-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.calc-out-row:last-child { border-bottom: 0; }
+.calc-out-row span { color: var(--muted); font-size: 13px; }
+.calc-out-row b { font-family: var(--mono); font-size: 16px; color: var(--accent-ink); }
+.tit-steps {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--ink-2);
+}
+.tit-steps b { color: var(--ink); }
+
+/* ---------- 长列表渲染优化 ---------- */
+.lib-row, .prep-card, .exp-card, .palette-item { content-visibility: auto; contain-intrinsic-size: auto 64px; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}

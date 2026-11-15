@@ -929,3 +929,96 @@
 /* perf: offscreen */
 .drawer-item { content-visibility: auto; contain-intrinsic-size: auto 64px; }
 .method-card { content-visibility: auto; contain-intrinsic-size: auto 76px; }
+
+
+/* ---------- 手机端：筛选条横向滚动，画布不再吃掉整屏 ---------- */
+@media (max-width: 640px) {
+  .chain-cats-row {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 8px 12px;
+    align-items: center;
+  }
+  .chain-cats {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 0;
+    scroll-snap-type: x proximity;
+  }
+  .chain-cats::-webkit-scrollbar { display: none; }
+  .chain-cats .chip {
+    flex: none;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+  .salt-toggle { flex: none; white-space: nowrap; }
+  .chain-viewport { height: 300px; }
+  .chain-hud { padding: 8px 10px; }
+  .chain-zoom input[type="range"] { width: 86px; }
+}
+@media (max-width: 420px) {
+  .chain-viewport { height: 270px; }
+  .chain-info h1 { font-size: 23px; }
+}
+
+/* 筛选条可横向滚动的视觉提示 + 盐类按钮与 chip 分开 */
+@media (max-width: 640px) {
+  .chain-cats {
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+  }
+  .salt-toggle { margin-left: 2px; }
+}
+
+
+/* ---------- 画布全屏 ---------- */
+.chain-fs {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #cfd8cf;
+  background: #fff;
+  color: #35423b;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .18s, border-color .18s, color .18s;
+}
+.chain-fs svg { width: 14px; height: 14px; }
+.chain-fs:hover { border-color: #1d2a3c; color: #1d2a3c; }
+.chain-fs.is-on { background: #1d2a3c; border-color: #1d2a3c; color: #fff; }
+
+
+
+@media (max-width: 640px) {
+  .chain-fs { padding: 6px 10px; }
+  .chain-fs span { display: none; }
+}
+
+
+/* ---------- 画布全屏：合成工坊 ---------- */
+.forge-stage:fullscreen,
+.forge-stage:-webkit-full-screen {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #f7f8f5;
+}
+.forge-stage:fullscreen .board-scroll,
+.forge-stage:-webkit-full-screen .board-scroll {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+.forge-stage:fullscreen .stage-bar,
+.forge-stage:-webkit-full-screen .stage-bar { flex: none; }

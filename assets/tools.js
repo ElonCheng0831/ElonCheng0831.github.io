@@ -59,7 +59,7 @@
   /* ---------------- 标签页 ---------------- */
   function initTabs() {
     var tabs = $$(".calc-tab");
-    var panels = { conc: $("#panel-conc"), eq: $("#panel-eq") };
+    var panels = { conc: $("#panel-conc"), eq: $("#panel-eq"), lib: $("#panel-lib"), tit: $("#panel-tit") };
     tabs.forEach(function (tab) {
       tab.addEventListener("click", function () {
         var name = tab.getAttribute("data-panel");
@@ -421,6 +421,7 @@
       .replace(/-+>/g, "->")
       .replace(/=>/g, "->")
       .replace(/→/g, "->")
+      .replace(/[=＝]\s*$/, "")   /* 结尾的等号只是"帮我补全"的提示符，不参与解析 */
       .trim();
     if (!raw) return "skip";
 
@@ -498,8 +499,9 @@
     input.addEventListener("input", function () {
       clearTimeout(timer);
       var v = String(input.value || "");
-      if (/[=＝]\s*$/.test(v)) { runEquation(); return; }   // 敲完等号立即补全
-      timer = setTimeout(runEquation, 320);
+      // 只有敲完等号才补全产物；没写等号时什么都不做（顺手清掉旧提示）
+      if (/[=＝]\s*$/.test(v)) { timer = setTimeout(runEquation, 120); }
+      else if (status) { status.textContent = ""; status.className = "calc-status"; }
     });
     input.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey) {
@@ -507,7 +509,6 @@
         runEquation();
       }
     });
-    input.addEventListener("blur", function () { if (input.value.trim()) runEquation(); });
 
     $$("[data-eq]").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -728,7 +729,124 @@
   }
 
   /* ---------------- 沸点参考 ---------------- */
-  function initBoiling() {
+  
+
+/* ================= 滴定计算 ================= */
+function initTitration(){
+  var c = $("#tit-c"), v = $("#tit-v"), vx = $("#tit-vx");
+  var a = $("#tit-a"), b = $("#tit-b"), m = $("#tit-m"), ms = $("#tit-ms");
+  var out = $("#tit-out"), steps = $("#tit-steps");
+  if (!c || !v || !out) return;
+
+  function num(el){ var x = parseFloat(String(el && el.value || "").replace(/[^\d.\-]/g, "")); return isFinite(x) ? x : NaN; }
+
+  function compute(){
+    var cs = num(c), vs = num(v), vxs = num(vx);
+    var na = Math.max(1, Math.round(num(a) || 1)), nb = Math.max(1, Math.round(num(b) || 1));
+    var M = num(m), m0 = num(ms);
+
+    if (!isFinite(cs) || !isFinite(vs) || !isFinite(vxs) || cs <= 0 || vs <= 0 || vxs <= 0){
+      out.innerHTML = '<p class="calc-hint">填好标准液浓度、消耗体积和取样体积就能算。</p>';
+      if (steps) steps.innerHTML = "";
+      return;
+    }
+    var nStd = cs * vs / 1000;
+    var nX = nStd * na / nb;
+    var cx = nX / (vxs / 1000);
+
+    var rows = [];
+    rows.push(["待测物物质的量 n", nX.toPrecision(4) + " mol"]);
+    rows.push(["待测液浓度 c", cx.toPrecision(4) + " mol/L"]);
+    if (isFinite(M) && M > 0) rows.push(["待测物质量 m", (nX * M).toPrecision(4) + " g"]);
+    if (isFinite(M) && M > 0 && isFinite(m0) && m0 > 0){
+      var w = nX * M / m0 * 100;
+      rows.push(["纯度", w.toPrecision(4) + " %"]);
+    }
+    out.innerHTML = rows.map(function (r) {
+      return '<div class="calc-out-row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>';
+    }).join("");
+
+    if (steps){
+      steps.innerHTML =
+        '<p>n(标准) = c × V = ' + cs + ' × ' + vs + ' / 1000 = <b>' + nStd.toPrecision(4) + '</b> mol</p>' +
+        '<p>n(待测) = n(标准) × ' + na + ' / ' + nb + ' = <b>' + nX.toPrecision(4) + '</b> mol</p>' +
+        '<p>c(待测) = n / V = ' + nX.toPrecision(4) + ' / ' + (vxs / 1000) + ' = <b>' + cx.toPrecision(4) + '</b> mol/L</p>';
+    }
+  }
+
+  [c, v, vx, a, b, m, ms].forEach(function (el) {
+    if (el) { el.addEventListener("input", compute); el.addEventListener("change", compute); }
+  });
+  compute();
+}
+
+/* ================= 试剂物质库 ================= */
+var libMolarCache = Object.create(null);
+function libMolar(f){
+  if (f in libMolarCache) return libMolarCache[f];
+  try {
+    var mm = window.ChemCore && ChemCore.molarMass ? ChemCore.molarMass(f) : null;
+    var val = (mm && typeof mm === "object" && typeof mm.mass === "number") ? mm.mass
+            : (typeof mm === "number" && isFinite(mm) ? mm : null);
+    libMolarCache[f] = val;
+    return val;
+  } catch (e) { return null; }
+}
+function initLib(){
+  var list = $("#lib-list"), search = $("#lib-search"), more = $("#lib-more"), cnt = $("#lib-count");
+  if (!list || !window.SUBSTANCES) return;
+  var all = window.SUBSTANCES.slice().sort(function (a, b) { return a.n.localeCompare(b.n, "zh-Hans-CN"); });
+  var data = all, shown = 60, STEP = 60;
+  if (cnt) cnt.textContent = String(all.length);
+
+  function row(o){
+    var m = libMolar(o.f);
+    return '<div class="lib-row" data-f="' + esc(o.f) + '">' +
+      '<div class="lib-name"><b>' + esc(o.n) + '</b><span>' + esc(o.k || "") + '</span></div>' +
+      '<div class="lib-formula">' + esc(o.f) + '</div>' +
+      '<div class="lib-mass">' + (m == null ? "—" : m.toFixed(2)) + '</div>' +
+      '<button type="button" class="mini lib-use">填进换算</button>' +
+    '</div>';
+  }
+  function paint(){
+    var slice = data.slice(0, shown);
+    list.innerHTML = slice.length
+      ? '<div class="lib-head"><span>名称</span><span>化学式</span><span>M g/mol</span><span></span></div>' + slice.map(row).join("")
+      : '<p class="calc-hint">没找到，换个中文名或化学式试试。</p>';
+    if (more) more.hidden = shown >= data.length;
+  }
+  function render(){
+    var q = String(search && search.value || "").trim().toLowerCase();
+    data = !q ? all : all.filter(function (o) {
+      return o.n.toLowerCase().indexOf(q) >= 0 || o.f.toLowerCase().indexOf(q) >= 0;
+    });
+    shown = STEP;
+    paint();
+  }
+  if (search) search.addEventListener("input", function () {
+    clearTimeout(search._t);
+    search._t = setTimeout(render, 120);
+  });
+  if (more) more.addEventListener("click", function () { shown += STEP; paint(); });
+  list.addEventListener("click", function (e) {
+    var btn = e.target.closest(".lib-use");
+    if (!btn) return;
+    var rowEl = btn.closest(".lib-row");
+    var f = rowEl && rowEl.getAttribute("data-f");
+    if (!f) return;
+    var input = $("#conc-formula");
+    if (input) {
+      input.value = f;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    var tab = document.querySelector('[data-panel="conc"]');
+    if (tab) tab.click();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  render();
+}
+
+function initBoiling() {
     var box = $("#bp-table");
     var search = $("#bp-search");
     var count = $("#bp-count");
@@ -778,5 +896,7 @@
     safeInit("eq", initEq);
     safeInit("reactions", initReactions);
     safeInit("boiling", initBoiling);
+    safeInit("lib", initLib);
+    safeInit("tit", initTitration);
   });
 })();

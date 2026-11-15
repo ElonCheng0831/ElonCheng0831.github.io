@@ -53,7 +53,8 @@
   var PILL_H = 48;
   var COL = 272;
 
-  var state = { q: "", cat: "all", hz: "all", active: null, zoom: 75, view: "chain", drawerSplit: null, drawerLimit: 60 };
+  var SMALL = window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+var state = { q: "", cat: "all", hz: "all", active: null, zoom: SMALL ? 55 : 75, view: "chain", drawerSplit: null, drawerLimit: 60 };
   var DRAWER_BATCH = 60;
 
   var WORD_RULES = [
@@ -565,7 +566,9 @@
     return false;
   }
 
-  function applyZoom() {
+  function localStorageZoom() { try { return localStorage.getItem(STORE_KEY); } catch (e) { return null; } }
+function applyZoom() {
+  if (SMALL && !localStorageZoom()) state.zoom = 55;
     zoomEl.value = String(state.zoom);
     zoomVal.textContent = state.zoom + "%";
     canvas.style.zoom = state.zoom / 100;
