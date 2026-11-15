@@ -2,7 +2,8 @@
 <html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
 <title>化境 ChemLab · 常见化学品制法与化学实验手册</title>
 <meta name="description" content="面向中学与大学基础化学的制法与实验手册：325 条常见化学品与试剂的实验室制法、321 个经典化学实验，含原理、试剂、步骤、现象、安全提示与实验难度分级；制造链路可视化、盐类离子交叉表，合成工坊可自动展开多步合成配方树。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230e9f8e' d='M9 2h6v5l4.5 11A2 2 0 0 1 17.6 21H6.4a2 2 0 0 1-1.9-3L9 7V2z'/%3E%3C/svg%3E">
@@ -15,6 +16,7 @@
     } catch (e) {}
   })();
 </script>
+<link rel="preconnect" href="https://hm.baidu.com" crossorigin>
 <link rel="stylesheet" href="assets/style.css">
   <script src="assets/analytics.js" defer></script>
   <meta name="theme-color" content="#0e9f8e">
@@ -65,67 +67,38 @@
 <main>
 
   <!-- ============ 英雄区 ============ -->
-  <section class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <span class="eyebrow">实验室手册 · 第二版</span>
-        <h1>把化学，<br>装进一只<em>烧瓶</em>。</h1>
+  <section class="hero hero-sentence">
+    <div class="wrap">
+      <p class="hero-kicker">化学资料站 · 全部免费 · 无需注册</p>
+      <h1 class="sentence">
+        <span>把化学，</span>
+        <span>装进一只<svg class="s-glyph" viewBox="0 0 200 270" aria-hidden="true" focusable="false">
+          <path d="M85 16H115V64L163 208A24 24 0 0 1 141 242H59A24 24 0 0 1 37 208L85 64Z" fill="none" stroke="currentColor" stroke-width="11" stroke-linejoin="round"/>
+          <path d="M62 178h76l22 30a24 24 0 0 1-19 34H59a24 24 0 0 1-19-34Z" fill="var(--accent)" opacity=".28"/>
+          <path d="M60 214h80" stroke="currentColor" stroke-width="11" opacity=".45" stroke-linecap="round"/>
+        </svg>烧瓶。</span>
+      </h1>
+
+      <div class="hero-tail">
         <p class="lede">
           从高锰酸钾制氧到乙酸乙酯的果香，从焰色试验到银镜反应——
-          把每一步原理、试剂、操作与风险都写清楚，让实验可复现、可理解、可安全。
+          每一步原理、试剂、操作与风险都写清楚，让实验可复现、可理解、可安全。
         </p>
-
         <div class="hero-actions">
           <a class="btn btn-primary" href="preparations.html">
             浏览药品制法
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
           </a>
           <a class="btn btn-ghost" href="experiments.html">看看能做哪些实验</a>
-          <a class="hero-link" href="forge.html">或者拖入药品，自动展开配方树 <span class="arrow">→</span></a>
-        </div>
-
-        <div class="hero-stats">
-          <div><span class="num">325</span><span class="lbl">条常见制法</span></div>
-          <div><span class="num">321</span><span class="lbl">个经典实验</span></div>
-          <div><span class="num">3</span><span class="lbl">级风险标注</span></div>
         </div>
       </div>
 
-      <div class="flask-stage" aria-hidden="true">
-        <svg class="flask" viewBox="0 0 200 270" style="color: var(--ink-2)">
-          <defs>
-            <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#ffffff" stop-opacity=".28"/>
-              <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-            </linearGradient>
-            <linearGradient id="liq" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="var(--accent)" stop-opacity=".45"/>
-              <stop offset="1" stop-color="var(--accent-deep)" stop-opacity=".82"/>
-            </linearGradient>
-            <clipPath id="flaskClip">
-              <path d="M85 16H115V64L163 208A24 24 0 0 1 141 242H59A24 24 0 0 1 37 208L85 64Z"/>
-            </clipPath>
-          </defs>
-
-          <g clip-path="url(#flaskClip)">
-            <rect class="liquid" x="0" y="166" width="200" height="90" fill="url(#liq)"/>
-            <ellipse class="surface" cx="100" cy="166" rx="54" ry="6" fill="var(--accent)" opacity=".5"/>
-            <circle class="bubble" cx="78" cy="230" r="4" fill="#eafff9" opacity=".85"/>
-            <circle class="bubble" cx="104" cy="234" r="6.5" fill="#eafff9" opacity=".7"/>
-            <circle class="bubble" cx="122" cy="228" r="3" fill="#eafff9" opacity=".9"/>
-            <circle class="bubble" cx="92" cy="232" r="2.5" fill="#eafff9" opacity=".8"/>
-            <circle class="bubble" cx="112" cy="224" r="5" fill="#eafff9" opacity=".6"/>
-            <circle class="bubble" cx="86" cy="220" r="3.5" fill="#eafff9" opacity=".75"/>
-            <circle class="bubble" cx="132" cy="234" r="2" fill="#eafff9" opacity=".7"/>
-            <circle class="bubble" cx="98" cy="238" r="4.5" fill="#eafff9" opacity=".65"/>
-          </g>
-
-          <path d="M85 16H115V64L163 208A24 24 0 0 1 141 242H59A24 24 0 0 1 37 208L85 64Z"
-                fill="url(#glass)" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
-          <path d="M92 30V60" stroke="currentColor" stroke-opacity=".3" stroke-width="3" stroke-linecap="round"/>
-          <path d="M52 205q8 22 26 26" stroke="#ffffff" stroke-opacity=".5" stroke-width="4" stroke-linecap="round" fill="none"/>
-        </svg>
-      </div>
+      <dl class="hero-stats">
+        <div><dt>条药品制法</dt><dd>325</dd></div>
+        <div><dt>个经典实验</dt><dd>321</dd></div>
+        <div><dt>种试剂物质</dt><dd>1515</dd></div>
+        <div><dt>条反应储备</dt><dd>804</dd></div>
+      </dl>
     </div>
   </section>
 
@@ -258,6 +231,34 @@
   </section>
 </main>
 
+  <!-- ============ 常见问题 ============ -->
+  <section class="section section-faq" id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">常见问题</span>
+        <h2>写之前，先讲清楚。</h2>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>这些资料是从哪来的，能当真吗？</summary>
+          <p>整理自公开教材、实验手册与试剂手册，按同一套结构重写：原理、试剂与仪器、操作步骤、现象、结论、风险提示。写的时候尽量保留原始浓度与条件，不替教材下判断。</p>
+        </details>
+        <details class="faq-item">
+          <summary>为什么每条都标了风险等级？</summary>
+          <p>三级标注：低危可课堂演示，中危需教师指导，高危只在实验室做。分级只是提示，不等于“可以做”——具体能不能动手，由老师和实验室条件决定。</p>
+        </details>
+        <details class="faq-item">
+          <summary>能照着页面自己在家做吗？</summary>
+          <p>不建议。本站是教学资料，不是操作指南；涉及强酸强碱、易燃溶剂、有毒气体的条目尤其不要自行尝试。药品、加热方式和废液处理都需要专业条件。</p>
+        </details>
+        <details class="faq-item">
+          <summary>计算工具的结果可以直接抄进报告吗？</summary>
+          <p>可以用来核对，但要理解前提：用标准原子量、不考虑活度系数与温度体积变化。配平只保证原子守恒，不判断反应能否发生；滴定只做计量关系换算，不含指示剂误差与终点判断。</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
 <footer class="footer">
   <div class="wrap">
     <div class="footer-grid">
@@ -285,9 +286,9 @@
     </div>
   </div>
 </footer>
-  <script src="assets/data-home.js"></script>
-<script src="assets/add-content.js"></script>
-<script src="assets/art.js"></script>
-<script src="assets/app.js"></script>
+  <script src="assets/data-home.js" defer></script>
+<script src="assets/add-content.js" defer></script>
+<script src="assets/art.js" defer></script>
+<script src="assets/app.js" defer></script>
 </body>
 </html>

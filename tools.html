@@ -63,14 +63,13 @@
         <span>计算工具</span>
       </nav>
       <h1>计算工具</h1>
-      <p>
-        两个常被算错的东西：<b>溶液浓度</b>（摩尔浓度和质量分数之间的换算，要带上密度和摩尔质量）和<b>方程式配平</b>（配完顺手给出摩尔比和简化质量比）。
-        结果里凡是站内收录过的物质，都能一键跳过去看它的制法和实验。
-      </p>
+      <p>浓度换算、方程式配平、物质库、滴定计算。结果里的物质可以跳到对应制法。</p>
 
       <div class="calc-tabs" role="tablist" aria-label="选择工具">
         <button type="button" class="calc-tab is-on" role="tab" id="tab-conc" aria-selected="true" aria-controls="panel-conc" data-panel="conc">浓度换算</button>
         <button type="button" class="calc-tab" role="tab" id="tab-eq" aria-selected="false" aria-controls="panel-eq" data-panel="eq">方程式配平</button>
+        <button type="button" class="calc-tab" role="tab" id="tab-lib" aria-selected="false" aria-controls="panel-lib" data-panel="lib">物质库</button>
+        <button type="button" class="calc-tab" role="tab" id="tab-tit" aria-selected="false" aria-controls="panel-tit" data-panel="tit">滴定计算</button>
       </div>
     </div>
   </section>
@@ -162,13 +161,74 @@
         
 </div>
 
-            <p class="calc-note">
-        计算用的是标准原子量（IUPAC 常用值，几位有效数字），没有考虑活度系数、温度带来的体积变化和气体非理想性；
-        配平结果只保证原子守恒，<b>不判断反应能否发生、条件与速率</b>。质量比是给配料估算用的近似整数比，别当成分析结果。
-        所有跳转都只是站内资料关联，不代表这条反应被验证过。
-      </p>
+  
+      <!-- ---------- 滴定计算 ---------- -->
+      <div class="calc-panel" id="panel-tit" role="tabpanel" aria-labelledby="tab-tit" hidden>
+        <div class="calc-grid">
+          <div class="calc-card">
+            <h2>1 · 滴定数据</h2>
+            <p class="calc-hint">按 c₁V₁/ν₁ = c₂V₂/ν₂ 计算。计量比填「待测 : 标准液」，例如 NaOH 滴定 HCl 填 1 : 1，Na₂CO₃ 滴定 HCl 填 1 : 2。</p>
+            <div class="calc-row">
+              <label class="calc-field">
+                <span>标准液浓度 c<sub>标</sub> (mol/L)</span>
+                <input id="tit-c" type="number" inputmode="decimal" step="0.0001" min="0" value="0.1">
+              </label>
+              <label class="calc-field">
+                <span>消耗标准液 V<sub>标</sub> (mL)</span>
+                <input id="tit-v" type="number" inputmode="decimal" step="0.01" min="0" value="20.00">
+              </label>
+            </div>
+            <div class="calc-row">
+              <label class="calc-field">
+                <span>待测液取样体积 (mL)</span>
+                <input id="tit-vx" type="number" inputmode="decimal" step="0.01" min="0" value="25.00">
+              </label>
+              <label class="calc-field">
+                <span>计量比（待测 : 标准）</span>
+                <span class="tit-ratio">
+                  <input id="tit-a" type="number" inputmode="numeric" step="1" min="1" value="1" aria-label="待测物计量数">
+                  <span>:</span>
+                  <input id="tit-b" type="number" inputmode="numeric" step="1" min="1" value="2" aria-label="标准液计量数">
+                </span>
+              </label>
+            </div>
+            <div class="calc-row">
+              <label class="calc-field">
+                <span>待测物摩尔质量 M (g/mol，可选)</span>
+                <input id="tit-m" type="number" inputmode="decimal" step="0.01" min="0" placeholder="例如 40.00（NaOH）">
+              </label>
+              <label class="calc-field">
+                <span>取样质量 (g，可选，算纯度)</span>
+                <input id="tit-ms" type="number" inputmode="decimal" step="0.0001" min="0" placeholder="例如 1.0000">
+              </label>
+            </div>
+          </div>
+          <div class="calc-card">
+            <h2>2 · 计算结果</h2>
+            <p class="calc-hint">只做计量关系换算，不考虑指示剂误差、终点判断与副反应；实际滴定要按实验规程做平行测定。</p>
+            <div id="tit-out" class="calc-out" aria-live="polite"></div>
+            <div id="tit-steps" class="tit-steps"></div>
+          </div>
+        </div>
+      </div>
+      <!-- ---------- 物质库 ---------- -->
+      <div class="calc-panel" id="panel-lib" role="tabpanel" aria-labelledby="tab-lib" hidden>
+        <div class="calc-card">
+          <h2>试剂物质库 · <span id="lib-count">—</span> 条</h2>
+          <p class="calc-hint">收录常见无机盐、酸碱、氧化物、单质、有机物与俗名试剂。分子量由化学式实时算，点「填进换算」把化学式送进浓度换算。</p>
+          <label class="calc-field">
+            <span>搜索</span>
+            <input id="lib-search" type="search" placeholder="中文名或化学式，例如 硫酸 / Na2CO3" autocomplete="off" aria-label="搜索物质">
+          </label>
+          <div id="lib-list" class="lib-list" aria-live="polite"></div>
+          <div class="calc-actions"><button type="button" class="btn btn-ghost" id="lib-more" hidden>显示更多</button></div>
+        </div>
+                  <p class="calc-note">
+      用标准原子量计算，只保证原子守恒与计量关系，不判断反应能否发生、条件与速率；跳转仅为站内资料关联。
+    </p>
     </div>
   </section>
+</div>
 </main>
 
 <footer class="footer">
@@ -200,11 +260,12 @@
   </div>
 </footer>
 
-<script src="assets/data-index.js"></script>
-<script src="assets/chem-core.js"></script>
-  <script src="assets/reaction-rules.js"></script>
-<script src="assets/data-reactions.js"></script>
-<script src="assets/tools.js"></script>
+<script src="assets/data-index.js" defer></script>
+<script src="assets/chem-core.js" defer></script>
+  <script src="assets/reaction-rules.js" defer></script>
+<script src="assets/data-reactions.js" defer></script>
+<script src="assets/data-substances.js" defer></script>
+<script src="assets/tools.js" defer></script>
 <script>
   (function () {
     var root = document.documentElement;
