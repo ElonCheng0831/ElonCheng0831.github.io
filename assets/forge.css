@@ -786,3 +786,42 @@ body.mode-auto .fg-node:hover { border-color: var(--accent); }
   .pm-go { display: none; }
   .pal-method { padding: 8px 9px; }
 }
+
+/* 修正：窄屏工坊按钮行（三个中文长标签塞不进三列） */
+@media (max-width: 640px) {
+  .forge-actions { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px; }
+  .forge-actions .btn {
+    white-space: normal !important;
+    font-size: 12.5px !important;
+    line-height: 1.35;
+    padding: 10px 8px !important;
+    height: auto;
+  }
+  .forge-actions .btn-primary { grid-column: 1 / -1; }
+  #forge-main { overflow-x: clip; }
+}
+@media (max-width: 380px) {
+  .forge-actions { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* 修正：全屏按钮在 .zoom-tools 里被统一成方形，会压成竖排 */
+.zoom-tools .chain-fs,
+.zoom-tools button.chain-fs {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.zoom-tools .chain-fs svg { width: 14px !important; height: 14px !important; flex: 0 0 14px; }
+.zoom-tools .chain-fs span { display: inline !important; line-height: 1; }
+@media (max-width: 900px) {
+  .zoom-tools .chain-fs, .zoom-tools button.chain-fs { height: 38px !important; }
+}

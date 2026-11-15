@@ -2626,3 +2626,20 @@ body {
   height: clamp(96px, 9.6vw, 132px) !important;
   overflow: visible;
 }
+
+/* 修正：导航汉堡按钮的三条线从未有样式，窄屏只剩一个空框 */
+.nav-toggle {
+  place-items: center;
+  gap: 4px;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+.nav-toggle span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}

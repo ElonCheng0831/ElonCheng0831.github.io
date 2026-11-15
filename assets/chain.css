@@ -1022,3 +1022,36 @@
 }
 .forge-stage:fullscreen .stage-bar,
 .forge-stage:-webkit-full-screen .stage-bar { flex: none; }
+
+/* 修正：全屏按钮放在 zoom-tools 里会被 flex:1 压扁 */
+.zoom-tools .chain-fs {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0;
+  white-space: nowrap;
+  justify-content: center;
+}
+.zoom-tools .chain-fs svg { flex: none; width: 14px; height: 14px; }
+@media (max-width: 900px) {
+  .zoom-tools .chain-fs { padding: 0 12px; }
+  .zoom-tools .chain-fs span { display: none; }
+}
+
+/* 修正二：全屏按钮被 .zoom-tools button 的方形尺寸/网格布局压成竖排 */
+.zoom-tools .chain-fs {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  white-space: nowrap;
+}
+.zoom-tools .chain-fs svg { width: 14px !important; height: 14px !important; flex: 0 0 14px; }
+.zoom-tools .chain-fs span { display: inline !important; font-size: 12px; line-height: 1; }
+@media (max-width: 900px) {
+  .zoom-tools .chain-fs { height: 38px !important; }
+}

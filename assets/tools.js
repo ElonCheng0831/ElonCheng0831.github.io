@@ -440,6 +440,7 @@
     var inferred = false;
     var hit = rxMatch(reactants);
     var cand = hit.exact.length ? hit.exact.slice() : (reactants.length === 1 ? hit.partial.slice() : []);
+    cand = dedupeCand(cand);
 
     // 表里没有：按性质规律推断（复分解看沉淀/气体/水、金属活动性、铵盐遇碱…）
     if (!cand.length && window.RxRules) {
@@ -680,6 +681,7 @@
     // 只有一个反应物时才允许退到“单物质分解”条目；
     // 多个反应物必须整套命中，避免 A + B 被误判成 A 自己的反应
     var cand = m.exact.length ? m.exact.slice() : (list.length === 1 ? m.partial.slice() : []);
+    cand = dedupeCand(cand);
     var cond = condEl ? condEl.value : "";
     if (cond) {
       var narrowed = cand.filter(function (e) { return String(e.cond).indexOf(cond) >= 0; });
@@ -900,3 +902,27 @@ function initBoiling() {
     safeInit("tit", initTitration);
   });
 })();
+
+/* 同一组反应物在不同表/规则里可能给出完全相同产物，弹窗前按产物签名合并：
+   保留说明最长的那一条（人工条目通常比规则推断写得具体） */
+function dedupeCand(list) {
+  var order = [], seen = {}, i, c, key, note;
+  for (i = 0; i < list.length; i++) {
+    c = list[i];
+    if (!c || !c.p || !c.p.length) { order.push(c); continue; }
+    key = c.p.join("|");
+    note = String(c.note || c.why || "");
+    if (!seen[key]) { seen[key] = { item: c, len: note.length, pos: order.length }; order.push(key); }
+    else if (note.length > seen[key].len) { seen[key] = { item: c, len: note.length, pos: seen[key].pos }; }
+  }
+  var out = [], u, k;
+  for (i = 0; i < order.length; i++) {
+    k = order[i];
+    if (typeof k === "string" && seen[k]) { out.push(seen[k].item); }
+    else if (typeof k !== "string") { out.push(k); }
+  }
+  /* 去重后保持原顺序 */
+  var rank = {}; list.forEach(function (x, idx) { if (x && x.p) rank[x.p.join("|")] = idx; });
+  out.sort(function (x, y) { return (rank[x.p.join("|")] || 0) - (rank[y.p.join("|")] || 0); });
+  return out;
+}
