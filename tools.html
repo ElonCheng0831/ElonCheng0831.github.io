@@ -157,6 +157,27 @@
 
           <div id="eq-result" aria-live="polite"></div>
         </div>
+
+        <div class="calc-card calc-card-wide" id="eq-bank-card">
+          <h2>题库 · 从药品制法与实验中抽题</h2>
+          <p class="calc-hint">
+            以下方程式全部取自「药品制法」与「化学实验」里的原理栏，共 <b id="eq-bank-count">0</b> 条，每条都已通过配平校验。
+            点一条即可填入上方输入框直接配平；也可以先搜物质名或化学式。
+          </p>
+          <div class="calc-actions eq-bank-tools">
+            <input type="search" id="eq-bank-search" class="eq-bank-search" placeholder="搜物质名 / 化学式 / 来源，如 氧气、CuSO4、实验" aria-label="搜索题库">
+            <div class="eq-bank-filters" role="group" aria-label="按来源筛选">
+              <button type="button" class="mini" data-bank-src="all" aria-pressed="true">全部</button>
+              <button type="button" class="mini" data-bank-src="prep" aria-pressed="false">药品制法</button>
+              <button type="button" class="mini" data-bank-src="exp" aria-pressed="false">化学实验</button>
+            </div>
+          </div>
+          <div id="eq-bank-list" class="eq-bank-list"></div>
+          <p class="calc-hint" id="eq-bank-more-wrap" hidden>
+            <button type="button" class="mini" id="eq-bank-more">再显示 30 条</button>
+            <span id="eq-bank-shown"></span>
+          </p>
+        </div>
       
         
 </div>
@@ -264,8 +285,9 @@
 <script src="assets/chem-core.js?v=20261115b" defer></script>
   <script src="assets/reaction-rules.js?v=20261115b" defer></script>
 <script src="assets/data-reactions.js?v=20261115b" defer></script>
-<script src="assets/data-substances.js?v=20261115b" defer></script>
-<script src="assets/tools.js?v=20261115b" defer></script>
+<script src="assets/data-substances.js?v=20261122a" defer></script>
+<script src="assets/data-equations.js?v=20261122a" defer></script>
+<script src="assets/tools.js?v=20261122a" defer></script>
 <script>
   (function () {
     var root = document.documentElement;

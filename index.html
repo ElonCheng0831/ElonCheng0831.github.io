@@ -68,15 +68,12 @@
 
   <!-- ============ 英雄区 ============ -->
   <section class="hero hero-sentence">
-    <div class="wrap">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
       <p class="hero-kicker">化学资料站 · 全部免费 · 无需注册</p>
       <h1 class="sentence">
         <span>把化学，</span>
-        <span>装进一只<svg class="s-glyph" viewBox="0 0 200 270" aria-hidden="true" focusable="false">
-          <path d="M85 16H115V64L163 208A24 24 0 0 1 141 242H59A24 24 0 0 1 37 208L85 64Z" fill="none" stroke="currentColor" stroke-width="11" stroke-linejoin="round"/>
-          <path d="M62 178h76l22 30a24 24 0 0 1-19 34H59a24 24 0 0 1-19-34Z" fill="var(--accent)" opacity=".28"/>
-          <path d="M60 214h80" stroke="currentColor" stroke-width="11" opacity=".45" stroke-linecap="round"/>
-        </svg>烧瓶。</span>
+        <span>装进一只烧瓶。</span>
       </h1>
 
       <div class="hero-tail">
@@ -99,6 +96,57 @@
         <div><dt>种试剂物质</dt><dd>1515</dd></div>
         <div><dt>条反应储备</dt><dd>804</dd></div>
       </dl>
+      </div>
+
+      <!-- 锥形瓶：每 6 秒摇一次并换色（纯 CSS 动画 + 内联 SVG，无图片） -->
+      <div class="hero-flask" aria-hidden="true">
+        <svg class="flask-svg" viewBox="0 0 220 300" role="presentation">
+          <defs>
+            <clipPath id="flaskInterior">
+              <path d="M92 46h36v52l66 150a30 30 0 0 1-27 40H53a30 30 0 0 1-27-40l66-150z"/>
+            </clipPath>
+            <linearGradient id="flaskGlass" x1=".18" y1="0" x2=".86" y2="1">
+              <stop offset="0" stop-color="#ffffff" stop-opacity=".16"/>
+              <stop offset=".5" stop-color="#ffffff" stop-opacity=".05"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity=".12"/>
+            </linearGradient>
+          </defs>
+
+          <g class="flask-shake">
+            <!-- 液体：矩形裁进瓶身内轮廓，底部自然贴合锥形 -->
+            <g clip-path="url(#flaskInterior)">
+              <rect class="flask-liquid" x="8" y="176" width="204" height="140"/>
+              <ellipse class="flask-surface" cx="110" cy="176" rx="56" ry="7"/>
+              <g class="flask-bubbles">
+                <circle cx="86" cy="220" r="3.6"/>
+                <circle cx="110" cy="238" r="2.8"/>
+                <circle cx="132" cy="216" r="3.2"/>
+                <circle cx="150" cy="242" r="2.4"/>
+                <circle cx="98" cy="256" r="2.2"/>
+              </g>
+            </g>
+
+            <!-- 玻璃瓶身 -->
+            <path class="flask-body"
+                  d="M92 46h36v52l66 150a30 30 0 0 1-27 40H53a30 30 0 0 1-27-40l66-150z"
+                  fill="url(#flaskGlass)" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"/>
+
+            <!-- 瓶口（开口圈） -->
+            <path class="flask-rim" d="M90 36h40a6 6 0 0 1 0 12H90a6 6 0 0 1 0-12z"
+                  fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"/>
+
+            <!-- 刻度线 -->
+            <g class="flask-ticks" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".4">
+              <path d="M152 176h16"/>
+              <path d="M158 196h20"/>
+              <path d="M164 216h24"/>
+            </g>
+
+            <!-- 玻璃高光 -->
+            <path class="flask-gloss" d="M84 112 56 186" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".35" fill="none"/>
+          </g>
+        </svg>
+      </div>
     </div>
   </section>
 
