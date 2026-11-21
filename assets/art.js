@@ -41,17 +41,16 @@
       label: "过滤",
       cap: "一贴二低三靠：滤纸紧贴漏斗，液面低于滤纸边缘，玻璃棒引流。",
       svg: svg(
-        '<path d="M46 18 h60" ' + S + '/>' +
-        '<path d="M76 18 v34" ' + S + '/>' +
-        '<path d="M56 52 h40 l-16 26 h-8 z" ' + S + '/>' +
-        '<path d="M60 58 h32 l-12 18 h-8 z" ' + AC + '/>' +
-        '<path d="M76 78 v14" ' + S + '/>' +
-        '<path d="M60 92 h32 l-4 12 h-24 z" ' + S + '/>' +
-        '<path d="M64 98 h24" ' + AC2 + '/>' +
-        '<path d="M92 40 l14 20" ' + S + '/>' +
-        '<circle cx="110" cy="66" r="3" ' + AC2 + '/>' +
-        '<circle cx="110" cy="76" r="2" ' + AC2 + '/>' +
-        '<path d="M62 30 h28" stroke-dasharray="4 4" ' + S + '/>',
+        '<path d="M30 14v84 M18 98h24" ' + S + '/>' +
+        '<path d="M30 44h16" ' + S + '/>' +
+        '<path d="M46 50h48L74 74h-8z" ' + S + '/>' +
+        '<path d="M52 54h36l-13 16h-10z" ' + AC + '/>' +
+        '<path d="M54 58h32" stroke-dasharray="4 4" ' + S + '/>' +
+        '<path d="M71 74v10" ' + S + '/>' +
+        '<circle cx="71" cy="87" r="1.6" fill="var(--accent)" opacity=".7"/>' +
+        '<path d="M54 92h34 M56 92v13a3 3 0 0 0 3 3h24a3 3 0 0 0 3-3V92" ' + S + '/>' +
+        '<path d="M58 100h26v8H58z" ' + AC + '/>' +
+        '<path d="M38 38l22 18" ' + S + '/>',
         "过滤操作"
       )
     },
@@ -75,18 +74,20 @@
       label: "蒸馏",
       cap: "温度计水银球位于支管口，冷凝水从下口进、上口出，弃去开始馏出的液体。",
       svg: svg(
-        '<path d="M24 60 a16 16 0 0 1 16 -16 h10 v-8" ' + S + '/>' +
-        '<path d="M50 36 v8 a16 16 0 0 1 16 16 v6 h-42 z" ' + S + '/>' +
-        '<path d="M28 52 h24" ' + AC2 + '/>' +
-        '<path d="M72 66 h34 l14 20" ' + S + '/>' +
-        '<path d="M78 72 h26" ' + AC + '/>' +
-        '<path d="M120 86 l14 18" ' + S + '/>' +
-        '<path d="M112 86 l14 18" ' + S + '/>' +
-        '<path d="M134 104 v8 h-16 v-8" ' + AC2 + '/>' +
-        '<path d="M28 86 q6 -12 12 0 q6 12 12 0" stroke="var(--warn)" stroke-width="2" fill="none"/>' +
-        '<path d="M40 100 h24" ' + S + '/>' +
-        '<circle cx="58" cy="48" r="2" ' + AC2 + '/>' +
-        '<circle cx="64" cy="42" r="2" ' + AC2 + '/>',
+        '<circle cx="36" cy="76" r="14" ' + S + '/>' +
+        '<path d="M31 62V46h10v16" ' + S + '/>' +
+        '<path d="M23 80h26a14 14 0 0 1-26 0z" ' + AC + '/>' +
+        '<path d="M36 34v12" ' + S + '/>' +
+        '<circle cx="36" cy="49" r="2.6" ' + AC2 + '/>' +
+        '<path d="M41 50h22" ' + S + '/>' +
+        '<rect x="-23" y="-7" width="46" height="14" rx="7" transform="translate(84,58) rotate(26)" ' + S + '/>' +
+        '<path d="M64 49l40 19" ' + S + '/>' +
+        '<circle cx="105" cy="74" r="1.6" fill="var(--accent)" opacity=".7"/>' +
+        '<circle cx="105" cy="79" r="1.3" fill="var(--accent)" opacity=".5"/>' +
+        '<path d="M100 84h12v6l12 14H88l12-14z" ' + S + '/>' +
+        '<path d="M91 99h26l2 5H89z" ' + AC + '/>' +
+        '<path d="M26 96q4-8 8 0q4 8 8 0" stroke="var(--warn)" stroke-width="2" fill="none"/>' +
+        '<path d="M22 104h30" ' + S + '/>',
         "蒸馏装置"
       )
     },
@@ -124,18 +125,21 @@
     },
     "gas-jar": {
       label: "气体收集",
-      cap: "根据气体密度选择向上或向下排空气，排水法 collection 时导管插入瓶口，集满后先移导管再停止加热。",
+      cap: "根据气体密度选择向上或向下排空气，排水法收集时导管插入瓶口，集满后先移导管再停止加热。",
       svg: svg(
-        '<path d="M22 74 a22 18 0 0 1 44 0 v10 h-44 z" ' + S + '/>' +
-        '<path d="M26 70 h36" ' + AC + '/>' +
-        '<path d="M44 74 v-24 h44" ' + S + '/>' +
-        '<path d="M88 50 v-18 h34 v44 h-34 z" ' + S + '/>' +
-        '<path d="M92 36 h26" ' + AC2 + '/>' +
-        '<path d="M96 28 q4 -8 8 0 M110 26 q4 -8 8 0" ' + AC2 + '/>' +
-        '<circle cx="92" cy="60" r="2" ' + AC2 + '/>' +
-        '<circle cx="98" cy="66" r="2" ' + AC2 + '/>' +
-        '<path d="M40 96 h68" ' + S + '/>' +
-        '<path d="M54 104 q6 -10 12 0" stroke="var(--warn)" stroke-width="2" fill="none"/>',
+        '<circle cx="40" cy="74" r="15" ' + S + '/>' +
+        '<path d="M35 60V50h10v10" ' + S + '/>' +
+        '<path d="M33 46h14" ' + S + '/>' +
+        '<path d="M26 78h28a15 15 0 0 1-28 0z" ' + AC + '/>' +
+        '<path d="M45 52h14v-16h30" ' + S + '/>' +
+        '<path d="M90 68V26h34v42" ' + S + '/>' +
+        '<circle cx="100" cy="38" r="1.7" ' + AC2 + '/>' +
+        '<circle cx="111" cy="34" r="1.5" ' + AC2 + '/>' +
+        '<circle cx="105" cy="48" r="1.4" ' + AC2 + '/>' +
+        '<circle cx="116" cy="46" r="1.3" ' + AC2 + '/>' +
+        '<path d="M84 68h46v10H84z" ' + S + '/>' +
+        '<path d="M86 71h42v6H86z" ' + AC + '/>' +
+        '<path d="M14 100h58" ' + S + '/>',
         "气体收集"
       )
     },
@@ -181,19 +185,16 @@
       label: "滴定",
       cap: "滴定管排气泡后调零，左手控制活塞，右手摇瓶，眼睛注视锥形瓶内颜色变化。",
       svg: svg(
-        '<path d="M76 10 v44" ' + S + '/>' +
-        '<path d="M70 12 h12 M70 64 h12" ' + S + '/>' +
-        '<path d="M76 54 v10" ' + S + '/>' +
-        '<circle cx="76" cy="58" r="3" ' + AC2 + '/>' +
-        '<path d="M72 70 h8 l-4 8 z" ' + S + '/>' +
-        '<path d="M62 92 q0 -10 14 -10 t14 10" ' + S + '/>' +
-        '<path d="M58 92 h36 l-4 12 h-28 z" ' + S + '/>' +
-        '<path d="M62 98 q14 4 28 0" ' + AC + '/>' +
-        '<path d="M52 104 h48" ' + S + '/>' +
-        '<circle cx="76" cy="74" r="2" ' + AC2 + '/>' +
-        '<circle cx="76" cy="80" r="1.5" ' + AC2 + '/>' +
-        '<path d="M112 40 q8 10 0 20" ' + S + '/>' +
-        '<path d="M120 40 q8 10 0 20" ' + S + '/>',
+        '<path d="M42 28h30 M42 28v12" ' + S + '/>' +
+        '<rect x="72" y="10" width="14" height="46" rx="3" ' + S + '/>' +
+        '<path d="M77 19h9 M77 28h9 M77 37h9" ' + S + '/>' +
+        '<path d="M79 56v4" ' + S + '/>' +
+        '<circle cx="79" cy="64" r="4" ' + S + '/>' +
+        '<path d="M79 68v6" ' + S + '/>' +
+        '<circle cx="79" cy="79" r="1.7" fill="var(--accent)" opacity=".8"/>' +
+        '<circle cx="79" cy="84" r="1.4" fill="var(--accent)" opacity=".55"/>' +
+        '<path d="M73 88h12v6l13 12H60l13-12z" ' + S + '/>' +
+        '<path d="M66 102h26l3 4H63z" ' + AC + '/>',
         "酸碱滴定"
       )
     },
@@ -201,18 +202,16 @@
       label: "电解",
       cap: "石墨电极插入电解液，接通直流电源，正极析出氧气、负极析出氢气，注意气密与通风。",
       svg: svg(
-        '<rect x="30" y="42" width="100" height="44" rx="6" ' + S + '/>' +
-        '<path d="M36 70 q44 -8 88 0" ' + AC + '/>' +
-        '<path d="M56 42 v-14 h-8" ' + S + '/>' +
-        '<path d="M104 42 v-14 h8" ' + S + '/>' +
-        '<path d="M48 28 h16 M96 28 h16" ' + S + '/>' +
-        '<rect x="66" y="14" width="28" height="12" rx="3" ' + S + '/>' +
-        '<path d="M70 20 h4 M80 20 h4 M90 20 h2" ' + AC2 + '/>' +
-        '<circle cx="56" cy="58" r="2" ' + AC2 + '/>' +
-        '<circle cx="56" cy="50" r="2" ' + AC2 + '/>' +
-        '<circle cx="104" cy="58" r="2" ' + AC2 + '/>' +
-        '<circle cx="104" cy="50" r="2" ' + AC2 + '/>' +
-        '<path d="M28 96 h104" ' + S + '/>',
+        '<rect x="70" y="10" width="20" height="12" rx="2" ' + S + '/>' +
+        '<path d="M75 16h3 M82 16h3" ' + AC2 + '/>' +
+        '<path d="M64 26v42 M96 26v42" ' + S + '/>' +
+        '<path d="M64 26h-8v-8h14 M96 26h8v-8h-14" ' + S + '/>' +
+        '<path d="M44 38h72v56a6 6 0 0 1-6 6H50a6 6 0 0 1-6-6z" ' + S + '/>' +
+        '<path d="M46 64h68v26a4 4 0 0 1-4 4H50a4 4 0 0 1-4-4z" ' + AC + '/>' +
+        '<circle cx="60" cy="56" r="1.8" ' + AC2 + '/>' +
+        '<circle cx="57" cy="47" r="1.3" ' + AC2 + '/>' +
+        '<circle cx="100" cy="54" r="1.8" ' + AC2 + '/>' +
+        '<circle cx="103" cy="45" r="1.3" ' + AC2 + '/>',
         "电解装置"
       )
     },
@@ -220,16 +219,16 @@
       label: "分液",
       cap: "分液漏斗静置分层，下层从下口放出，上层从上口倒出，放气时倒置漏斗打开活塞。",
       svg: svg(
-        '<path d="M80 14 v14" ' + S + '/>' +
-        '<path d="M64 28 h32 l-8 26 h-16 z" ' + S + '/>' +
-        '<path d="M68 40 h24 l-4 10 h-16 z" ' + AC + '/>' +
-        '<path d="M80 54 v10" ' + S + '/>' +
-        '<circle cx="80" cy="66" r="4" ' + S + '/>' +
-        '<path d="M80 70 v16" ' + S + '/>' +
-        '<path d="M64 92 h32 l-6 10 h-20 z" ' + S + '/>' +
-        '<path d="M66 96 h28" ' + AC2 + '/>' +
-        '<path d="M40 54 h22 M40 54 v-16 h22" ' + S + '/>' +
-        '<path d="M120 44 q8 10 0 20" ' + S + '/>',
+        '<path d="M26 12v88 M14 100h24" ' + S + '/>' +
+        '<path d="M26 40h20" ' + S + '/>' +
+        '<path d="M56 30c4 14-10 16-10 30a26 26 0 0 0 52 0c0-14-14-16-10-30z" ' + S + '/>' +
+        '<path d="M50 66h44v7H50z" ' + AC + '/>' +
+        '<path d="M51 74h42v6H51z" ' + AC2 + '/>' +
+        '<path d="M72 86v4" ' + S + '/>' +
+        '<circle cx="72" cy="94" r="4" ' + S + '/>' +
+        '<path d="M72 98v6" ' + S + '/>' +
+        '<path d="M54 105h36 M56 105v5h32v-5" ' + S + '/>' +
+        '<path d="M58 107h28v2H58z" ' + AC + '/>',
         "分液操作"
       )
     },
@@ -237,16 +236,13 @@
       label: "纸层析",
       cap: "滤纸点样端浸入展开剂，斑点随溶剂上行，不同组分因吸附与溶解能力差异而分开。",
       svg: svg(
-        '<path d="M44 34 h64 v58 h-64 z" ' + S + '/>' +
-        '<path d="M48 82 h56" ' + AC + '/>' +
-        '<rect x="70" y="24" width="12" height="62" rx="2" ' + S + '/>' +
-        '<circle cx="76" cy="78" r="2.5" fill="var(--warn)" opacity=".7"/>' +
-        '<circle cx="76" cy="64" r="2.5" fill="var(--accent)" opacity=".7"/>' +
-        '<circle cx="76" cy="50" r="2.5" fill="var(--amber)" opacity=".8"/>' +
-        '<circle cx="76" cy="38" r="2" fill="var(--warn)" opacity=".4"/>' +
-        '<path d="M56 40 h10 M56 52 h6" ' + AC2 + '/>' +
-        '<path d="M118 34 v26" ' + S + '/>' +
-        '<path d="M114 60 h8 l-4 8 z" ' + S + '/>',
+        '<path d="M50 28h60v66a6 6 0 0 1-6 6H56a6 6 0 0 1-6-6z" ' + S + '/>' +
+        '<path d="M52 84h56v10a4 4 0 0 1-4 4H56a4 4 0 0 1-4-4z" ' + AC + '/>' +
+        '<path d="M74 18h12v70H74z" ' + S + '/>' +
+        '<path d="M74 48h12" stroke-dasharray="3 3" ' + AC2 + '/>' +
+        '<circle cx="80" cy="74" r="2.4" fill="var(--warn)" opacity=".75"/>' +
+        '<circle cx="80" cy="64" r="2.4" fill="var(--accent)" opacity=".8"/>' +
+        '<circle cx="80" cy="54" r="2.2" fill="var(--amber)" opacity=".85"/>',
         "纸层析"
       )
     },
@@ -254,16 +250,13 @@
       label: "焰色试验",
       cap: "铂丝蘸取样品在无色火焰外焰灼烧，观察火焰颜色；每次试验前用稀盐酸洗净铂丝。",
       svg: svg(
-        '<path d="M36 88 h40" ' + S + '/>' +
-        '<path d="M56 88 v-16" ' + S + '/>' +
-        '<path d="M48 84 q8 -30 8 0" ' + S + '/>' +
-        '<path d="M56 72 q6 -26 14 -30" ' + S + '/>' +
-        '<path d="M70 42 q8 14 4 26" ' + S + '/>' +
-        '<path d="M96 40 q20 6 22 22 q2 16 -14 20" ' + S + '/>' +
-        '<path d="M104 46 q14 6 14 18 q0 12 -12 14" ' + AC + '/>' +
-        '<path d="M118 30 l6 -6 M128 40 l8 -2 M124 52 l8 4" stroke="var(--amber)" stroke-width="2" fill="none"/>' +
-        '<path d="M56 72 q10 -6 18 0" stroke="var(--warn)" stroke-width="2" fill="none"/>' +
-        '<circle cx="64" cy="64" r="2" fill="var(--warn)" opacity=".6"/>',
+        '<path d="M44 92h52" ' + S + '/>' +
+        '<path d="M30 64h30l14-8" ' + S + '/>' +
+        '<circle cx="80" cy="52" r="4" ' + S + '/>' +
+        '<circle cx="80" cy="47" r="2" fill="var(--warn)" opacity=".75"/>' +
+        '<path d="M88 92c0-18 5-26 11-40 6 14 11 22 11 40a11 11 0 0 1-22 0z" ' + S + '/>' +
+        '<path d="M93 92c0-11 3-16 6-25 3 9 6 14 6 25a6 6 0 0 1-12 0z" ' + AC2 + '/>' +
+        '<path d="M114 34l6-6 M120 46l8-2 M116 58l6 4" stroke="var(--amber)" stroke-width="2" fill="none"/>',
         "焰色试验"
       )
     },

@@ -1625,3 +1625,62 @@ html[data-theme="dark"] .chain-drawer .risk-filter[aria-pressed="true"] {
   border-color: var(--accent) !important;
   color: #9decd8 !important;
 }
+
+/* =================================================================
+   盐类检索表 · 夜览收口
+   上一版只清了 background-color，而 .salt-head 等用的是 background 渐变简写，
+   白渐变没被清掉、文字又被压成浅灰 → 浅字压白底。这里改成整条 background 覆盖。
+   ================================================================= */
+html[data-theme="dark"] .salt-view,
+html[data-theme="dark"] .salt-panel {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+html[data-theme="dark"] .salt-head {
+  background: var(--surface-2) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+html[data-theme="dark"] .salt-head h2 { color: #e9f1ee !important; }
+html[data-theme="dark"] .salt-head p { color: var(--ink-2) !important; }
+html[data-theme="dark"] .salt-kicker { color: var(--ink-3) !important; }
+html[data-theme="dark"] .salt-legend { color: var(--ink-2) !important; }
+html[data-theme="dark"] .salt-legend b { color: #e9f1ee !important; }
+html[data-theme="dark"] .salt-main { border-color: var(--line) !important; background: transparent !important; }
+html[data-theme="dark"] .salt-rare {
+  background: var(--surface-2) !important;
+  border-top: 1px solid var(--line) !important;
+}
+html[data-theme="dark"] .salt-rare-head h3 { color: #e9f1ee !important; }
+html[data-theme="dark"] .salt-result { background: var(--surface-2) !important; border-color: var(--line) !important; }
+html[data-theme="dark"] .salt-result-head h3 { color: #e9f1ee !important; }
+html[data-theme="dark"] .salt-table thead th {
+  background: #111a17 !important;
+  color: #cfe2da !important;
+  border-color: var(--line) !important;
+}
+html[data-theme="dark"] .salt-table tbody th {
+  background: #16211d !important;
+  color: #cfe2da !important;
+  border-color: var(--line) !important;
+}
+html[data-theme="dark"] .salt-table td { border-color: var(--line) !important; }
+html[data-theme="dark"] .salt-corner { background: #0b1210 !important; color: #9fb3ab !important; }
+html[data-theme="dark"] .salt-cell {
+  background: var(--surface) !important;
+  border-radius: 6px;
+}
+html[data-theme="dark"] .salt-cell b { color: #7fe6cf !important; }
+html[data-theme="dark"] .salt-cell small { color: var(--ink-3) !important; }
+html[data-theme="dark"] .salt-cell:hover { background: var(--surface-2) !important; }
+html[data-theme="dark"] .salt-cell.is-active { background: rgba(47,181,154,.16) !important; }
+html[data-theme="dark"] .salt-none { background: #131c19 !important; color: #4e5c56 !important; }
+html[data-theme="dark"] .salt-chip {
+  background: var(--surface-2) !important;
+  border-color: var(--line) !important;
+}
+html[data-theme="dark"] .salt-chip b { color: #7fe6cf !important; }
+html[data-theme="dark"] .salt-chip span { color: var(--ink-3) !important; }
+html[data-theme="dark"] .salt-choice {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+}

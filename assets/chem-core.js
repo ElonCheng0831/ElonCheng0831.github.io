@@ -31,6 +31,9 @@
     if (!raw) return { ok: false, error: "化学式为空" };
     var s = String(raw)
       .replace(/\s+/g, "")
+      /* 下标数字（₂₃₄…）与上标（²³）统一成普通数字，站内数据和教材写法都带这种字符 */
+      .replace(/[₀-₉]/g, function (ch) { return String("₀₁₂₃₄₅₆₇₈₉".indexOf(ch)); })
+      .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, function (ch) { return String("⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(ch)); })
       .replace(/[（]/g, "(").replace(/[）]/g, ")")
       .replace(/[【\[]/g, "(").replace(/[】\]]/g, ")")
       .replace(/[.。]/g, "·");
@@ -39,13 +42,25 @@
     var total = {};
     var parts = s.split(/[·*]/);
 
+    /* 前导系数写在第一个片段上时，它乘的是整个物种：
+       3NH3·H2O = 3 × (NH3·H2O)，而不是 3×NH3 + H2O。
+       而 CuSO4·5H2O 里的 5 属于第二个片段，只乘 H2O。 */
+    var overall = 1;
+    if (parts.length > 1) {
+      var firstLead = parts[0].match(/^(\d+)/);
+      if (firstLead) {
+        overall = parseInt(firstLead[1], 10);
+        parts[0] = parts[0].slice(firstLead[1].length);
+      }
+    }
+
     for (var pi = 0; pi < parts.length; pi++) {
       var part = parts[pi];
       if (!part) continue;
       var lead = part.match(/^(\d+)/);
-      var outer = 1;
+      var outer = overall;
       if (lead) {
-        outer = parseInt(lead[1], 10);
+        outer = parseInt(lead[1], 10) * overall;
         part = part.slice(lead[1].length);
       }
       var parsed = parseGroup(part);

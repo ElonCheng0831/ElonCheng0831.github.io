@@ -682,3 +682,67 @@ html[data-theme="dark"] .btn-accent { color: #04231f; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
+
+/* ---------------- 方程式题库（从药品制法 / 实验抽取） ---------------- */
+.eq-bank-tools { flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.eq-bank-search {
+  flex: 1 1 260px;
+  min-width: 0;
+  font: 400 14px/1.4 var(--sans);
+  color: var(--ink);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px 12px;
+}
+.eq-bank-search:focus { outline: none; border-color: var(--accent); }
+.eq-bank-search::placeholder { color: var(--muted); }
+
+.eq-bank-filters { display: flex; gap: 4px; }
+.eq-bank-filters .mini[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+  background: var(--accent-soft, rgba(47, 212, 184, .12));
+}
+
+.eq-bank-list { display: grid; gap: 7px; margin-top: 14px; }
+
+.eq-bank-item {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  font: 500 13.5px/1.55 var(--mono);
+  color: var(--ink);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.eq-bank-item:hover { border-color: var(--accent); border-left-color: var(--accent); }
+.eq-bank-item .eb-eq { flex: 1 1 auto; min-width: 0; }
+.eq-bank-item .eb-cond {
+  flex: 0 0 auto;
+  font: 500 11.5px/1 var(--sans);
+  color: var(--accent-deep);
+  background: var(--accent-soft, rgba(47, 212, 184, .12));
+  border-radius: 99px;
+  padding: 3px 8px;
+}
+.eq-bank-item .eb-src {
+  flex: 0 0 auto;
+  font: 400 11.5px/1 var(--sans);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.eq-bank-empty { font: 400 13.5px/1.7 var(--sans); color: var(--muted); padding: 6px 2px; }
+
+@media (max-width: 640px) {
+  .eq-bank-item { flex-wrap: wrap; gap: 4px 8px; }
+  .eq-bank-item .eb-src { flex: 1 0 100%; }
+}

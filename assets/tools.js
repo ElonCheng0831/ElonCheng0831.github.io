@@ -518,7 +518,118 @@
       });
     });
 
+    initEqBank(input);
+
     runEquation({ noComplete: true });
+  }
+
+  /* ---------------- 方程式题库 ---------------- */
+  /* 数据来自 assets/data-equations.js（由药品制法 / 化学实验的 principle 抽题并校验） */
+  var eqBankState = { q: "", src: "all", shown: 30 };
+
+  function eqBankAll() {
+    var bank = Array.isArray(window.EQUATION_BANK) ? window.EQUATION_BANK : [];
+    return bank;
+  }
+
+  function eqBankMatch(item, q) {
+    if (!q) return true;
+    var hay = (item.eq + " " + item.name + " " + (item.cat || "") + " " + (item.cond || "")).toLowerCase();
+    var needle = q.toLowerCase();
+    /* 化学式里常写成下标/全角，这里把两边都压平再比 */
+    var flatHay = hay.replace(/[₀-₉]/g, function (ch) { return String("₀₁₂₃₄₅₆₇₈₉".indexOf(ch)); }).replace(/\s+/g, "");
+    var flatNeedle = needle.replace(/[₀-₉]/g, function (ch) { return String("₀₁₂₃₄₅₆₇₈₉".indexOf(ch)); }).replace(/\s+/g, "");
+    return hay.indexOf(needle) >= 0 || flatHay.indexOf(flatNeedle) >= 0;
+  }
+
+  function renderEqBank(input) {
+    var list = $("#eq-bank-list");
+    if (!list) return;
+    var all = eqBankAll();
+    var q = eqBankState.q.trim();
+    var filtered = all.filter(function (item) {
+      if (eqBankState.src !== "all" && item.kind !== eqBankState.src) return false;
+      return eqBankMatch(item, q);
+    });
+
+    var countEl = $("#eq-bank-count");
+    if (countEl) countEl.textContent = filtered.length === all.length ? String(all.length) : filtered.length + " / " + all.length;
+
+    var slice = filtered.slice(0, eqBankState.shown);
+    if (!slice.length) {
+      list.innerHTML = '<p class="eq-bank-empty">没找到匹配的方程式，换个关键词试试（可以搜物质名、化学式或类别）。</p>';
+    } else {
+      list.innerHTML = slice.map(function (item, i) {
+        var srcLabel = item.kind === "prep" ? "制法 · " + item.name : "实验 · " + item.name;
+        return '<button type="button" class="eq-bank-item" data-bank-idx="' + i + '">' +
+          '<span class="eb-eq">' + esc(item.eq) + "</span>" +
+          (item.cond ? '<span class="eb-cond">' + esc(item.cond) + "</span>" : "") +
+          '<span class="eb-src">' + esc(srcLabel) + "</span>" +
+          "</button>";
+      }).join("");
+      list.querySelectorAll(".eq-bank-item").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var idx = parseInt(btn.getAttribute("data-bank-idx"), 10);
+          var item = slice[idx];
+          if (!item) return;
+          input.value = item.eq;
+          if (input.focus) input.focus();
+          runEquation({ noComplete: true });
+          var res = $("#eq-result");
+          if (res && res.scrollIntoView) res.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        });
+      });
+    }
+
+    var moreWrap = $("#eq-bank-more-wrap");
+    var moreBtn = $("#eq-bank-more");
+    var shownEl = $("#eq-bank-shown");
+    if (moreWrap && moreBtn) {
+      var hasMore = filtered.length > eqBankState.shown;
+      moreWrap.hidden = !hasMore;
+      if (shownEl) shownEl.textContent = "已显示 " + slice.length + " / " + filtered.length;
+      moreBtn.onclick = function () {
+        eqBankState.shown += 30;
+        renderEqBank(input);
+      };
+    }
+  }
+
+  function initEqBank(input) {
+    var list = $("#eq-bank-list");
+    if (!list) return;
+    var all = eqBankAll();
+    if (!all.length) {
+      var card = $("#eq-bank-card");
+      if (card) card.hidden = true;
+      return;
+    }
+
+    var search = $("#eq-bank-search");
+    if (search) {
+      var timer = null;
+      search.addEventListener("input", function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          eqBankState.q = search.value || "";
+          eqBankState.shown = 30;
+          renderEqBank(input);
+        }, 160);
+      });
+    }
+
+    $$("[data-bank-src]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        eqBankState.src = btn.getAttribute("data-bank-src") || "all";
+        eqBankState.shown = 30;
+        $$("[data-bank-src]").forEach(function (b) {
+          b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+        });
+        renderEqBank(input);
+      });
+    });
+
+    renderEqBank(input);
   }
 
   /* ---------------- 反应预测 ---------------- */
